@@ -1,0 +1,89 @@
+import 'package:flutter/material.dart';
+import '../../../core/theme/colors.dart';
+import '../../../domain/models/route_instruction.dart';
+
+class TurnByTurnCard extends StatelessWidget {
+  final bool isDark;
+  final RouteInstruction step;
+  final int stepIndex;
+  final int totalSteps;
+  final VoidCallback onSpeak;
+  final VoidCallback onClose;
+
+  const TurnByTurnCard({
+    super.key,
+    required this.isDark,
+    required this.step,
+    required this.stepIndex,
+    required this.totalSteps,
+    required this.onSpeak,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final surfaceColor = isDark ? const Color(0xFF1C1C26) : Colors.white;
+    final primaryColor = isDark ? AppColors.primaryLight : AppColors.primary;
+    final subtextColor = isDark ? AppColors.textSecondary : AppColors.lightTextSecondary;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isDark ? AppColors.primary.withOpacity(0.4) : AppColors.lightBorder),
+        boxShadow: [
+          BoxShadow(color: isDark ? AppColors.primary.withOpacity(0.2) : Colors.black.withOpacity(0.12), blurRadius: 20),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: isDark ? AppColors.purpleGradient : null,
+              color: isDark ? null : primaryColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.turn_right_rounded, color: Colors.white, size: 28),
+                const SizedBox(width: 10),
+                Expanded(child: Text(step.instruction, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white))),
+                IconButton(
+                  icon: const Icon(Icons.volume_up_rounded, color: Colors.white70, size: 20),
+                  onPressed: onSpeak,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white70, size: 20),
+                  onPressed: onClose,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.straighten_rounded, size: 16, color: subtextColor),
+                    const SizedBox(width: 6),
+                    Text('${step.distance.toStringAsFixed(0)} m', style: TextStyle(color: subtextColor, fontWeight: FontWeight.w600, fontSize: 13)),
+                    const Spacer(),
+                    Text('${stepIndex + 1} / $totalSteps', style: TextStyle(color: subtextColor, fontSize: 12, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
