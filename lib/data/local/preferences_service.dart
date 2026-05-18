@@ -42,16 +42,24 @@ class PreferencesService {
     return null;
   }
 
+  static const String keyUserPhotoPath = 'user_photo_path_pref';
+
   void saveUserProfile(UserProfile profile) {
     prefs.setString(keyUserName, profile.name);
     prefs.setInt(keyUserAge, profile.age);
+    if (profile.photoPath != null) {
+      prefs.setString(keyUserPhotoPath, profile.photoPath!);
+    } else {
+      prefs.remove(keyUserPhotoPath);
+    }
   }
 
   UserProfile? loadUserProfile() {
     final name = prefs.getString(keyUserName);
     final age = prefs.getInt(keyUserAge);
+    final photoPath = prefs.getString(keyUserPhotoPath);
     if (name != null && age != null) {
-      return UserProfile(name: name, age: age);
+      return UserProfile(name: name, age: age, photoPath: photoPath);
     }
     return null;
   }

@@ -11,7 +11,7 @@ class UserProfileNotifier extends Notifier<UserProfile> {
 
   Future<void> _loadFromPrefs() async {
     final prefs = ref.read(preferencesServiceProvider);
-    final profile = await prefs.loadUserProfile();
+    final profile = prefs.loadUserProfile();
     if (profile != null) state = profile;
   }
 
