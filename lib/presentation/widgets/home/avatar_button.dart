@@ -18,7 +18,7 @@ class AvatarButton extends StatelessWidget {
           shape: BoxShape.circle,
           gradient: isDark ? AppColors.purpleGradient : null,
           color: isDark ? null : AppColors.lightPrimary,
-          boxShadow: isDark ? [BoxShadow(color: AppColors.primary.withOpacity(0.5), blurRadius: 12, spreadRadius: 2)] : [],
+          boxShadow: isDark ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.5), blurRadius: 12, spreadRadius: 2)] : [],
         ),
         child: const Icon(Icons.person_rounded, color: Colors.white, size: 24),
       ),

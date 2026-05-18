@@ -55,7 +55,7 @@ class PoiDetailsSheet extends StatelessWidget {
                     const SizedBox(height: 2),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                      decoration: BoxDecoration(color: poiColor.withOpacity(0.18), borderRadius: BorderRadius.circular(12)),
+                      decoration: BoxDecoration(color: poiColor.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(12)),
                       child: Text(poi.category.label,
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: poiColor)),
                     ),
@@ -75,7 +75,7 @@ class PoiDetailsSheet extends StatelessWidget {
                 color: isDark ? null : AppColors.lightPrimary,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: isDark
-                    ? [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 14)]
+                    ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 14)]
                     : [],
               ),
               child: ElevatedButton.icon(
@@ -216,7 +216,7 @@ class CoordinateDetailsSheet extends StatelessWidget {
                 color: isDark ? null : AppColors.lightPrimary,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: isDark
-                    ? [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 14)]
+                    ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 14)]
                     : [],
               ),
               child: ElevatedButton.icon(

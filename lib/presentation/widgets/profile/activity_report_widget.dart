@@ -70,7 +70,7 @@ class _ActivityReportWidgetState extends ConsumerState<ActivityReportWidget> {
           Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: widget.isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
+              color: widget.isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -199,7 +199,7 @@ class _ActivityReportWidgetState extends ConsumerState<ActivityReportWidget> {
                         decoration: BoxDecoration(
                           color: bar.value > 0
                               ? widget.primaryColor
-                              : (widget.isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06)),
+                              : (widget.isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06)),
                           borderRadius: BorderRadius.circular(4),
                           border: bar.value > 0
                               ? Border.all(color: widget.textColor, width: 1.5)

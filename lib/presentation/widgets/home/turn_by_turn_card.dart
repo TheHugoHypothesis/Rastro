@@ -34,9 +34,9 @@ class TurnByTurnCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? AppColors.primary.withOpacity(0.4) : AppColors.lightBorder),
+        border: Border.all(color: isDark ? AppColors.primary.withValues(alpha: 0.4) : AppColors.lightBorder),
         boxShadow: [
-          BoxShadow(color: isDark ? AppColors.primary.withOpacity(0.2) : Colors.black.withOpacity(0.12), blurRadius: 20),
+          BoxShadow(color: isDark ? AppColors.primary.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.12), blurRadius: 20),
         ],
       ),
       child: Column(
@@ -83,7 +83,7 @@ class TurnByTurnCard extends StatelessWidget {
                     
                     // Controles de Navegação de Rota Manuais (RF014)
                     IconButton(
-                      icon: Icon(Icons.chevron_left_rounded, size: 20, color: stepIndex > 0 ? subtextColor : subtextColor.withOpacity(0.3)),
+                      icon: Icon(Icons.chevron_left_rounded, size: 20, color: stepIndex > 0 ? subtextColor : subtextColor.withValues(alpha: 0.3)),
                       onPressed: stepIndex > 0 ? onPrevious : null,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
@@ -95,7 +95,7 @@ class TurnByTurnCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     IconButton(
-                      icon: Icon(Icons.chevron_right_rounded, size: 20, color: stepIndex < totalSteps - 1 ? subtextColor : subtextColor.withOpacity(0.3)),
+                      icon: Icon(Icons.chevron_right_rounded, size: 20, color: stepIndex < totalSteps - 1 ? subtextColor : subtextColor.withValues(alpha: 0.3)),
                       onPressed: stepIndex < totalSteps - 1 ? onNext : null,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),

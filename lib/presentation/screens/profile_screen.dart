@@ -147,7 +147,7 @@ class ProfileScreen extends ConsumerWidget {
                         color: isDark ? null : AppColors.lightPrimary,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: isDark
-                            ? [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 16)]
+                            ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 16)]
                             : [],
                       ),
                       child: ElevatedButton.icon(

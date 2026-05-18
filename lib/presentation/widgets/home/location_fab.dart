@@ -21,8 +21,8 @@ class LocationFab extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: isDark ? const Color(0xFF13131A) : Colors.white,
-          border: Border.all(color: isDark ? AppColors.primary.withOpacity(0.6) : AppColors.lightBorder),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 12)],
+          border: Border.all(color: isDark ? AppColors.primary.withValues(alpha: 0.6) : AppColors.lightBorder),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 12)],
         ),
         child: Icon(Icons.my_location_rounded, color: isDark ? AppColors.primaryLight : AppColors.primary, size: 22),
       ),

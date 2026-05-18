@@ -54,12 +54,12 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
             height: 48,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: widget.surfaceColor.withOpacity(0.92),
+              color: widget.surfaceColor.withValues(alpha: 0.92),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: widget.isDark ? AppColors.border : AppColors.lightBorder),
               boxShadow: widget.isDark
-                  ? [BoxShadow(color: AppColors.primary.withOpacity(0.15), blurRadius: 16, spreadRadius: 1)]
-                  : [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12)],
+                  ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.15), blurRadius: 16, spreadRadius: 1)]
+                  : [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 12)],
             ),
             child: Row(
               children: [
@@ -175,7 +175,7 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
                     ? Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.12),
+                          color: primaryColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -266,7 +266,7 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
                     ? Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: widget.routeColor.withOpacity(0.12),
+                          color: widget.routeColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(

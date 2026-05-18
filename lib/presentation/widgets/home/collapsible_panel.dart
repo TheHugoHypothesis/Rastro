@@ -51,7 +51,7 @@ class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
       decoration: BoxDecoration(
         color: widget.surfaceColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 24, offset: const Offset(0, -4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, -4))],
       ),
       child: GestureDetector(
         onVerticalDragEnd: (details) {
@@ -253,7 +253,7 @@ class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
                     width: 0,
                   ),
                   boxShadow: widget.isDark
-                      ? [BoxShadow(color: AppColors.primary.withOpacity(0.45), blurRadius: 18, spreadRadius: 1)]
+                      ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.45), blurRadius: 18, spreadRadius: 1)]
                       : [],
                 ),
                 child: ElevatedButton(

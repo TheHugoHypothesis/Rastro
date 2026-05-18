@@ -1,74 +1,86 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum NotificationType { info, route, alert, success }
+class NotificationService {
+  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+  bool _initialized = false;
 
-class NotificationModel {
-  final String id;
-  final String title;
-  final String body;
-  final NotificationType type;
-  final DateTime timestamp;
+  Future<void> init() async {
+    if (_initialized) return;
 
-  NotificationModel({
-    required this.id,
-    required this.title,
-    required this.body,
-    this.type = NotificationType.info,
-    required this.timestamp,
-  });
-}
-
-class NotificationNotifier extends StateNotifier<NotificationModel?> {
-  NotificationNotifier() : super(null);
-
-  final List<NotificationModel> _history = [];
-  List<NotificationModel> get history => List.unmodifiable(_history);
-
-  final _historyController = StreamController<List<NotificationModel>>.broadcast();
-  Stream<List<NotificationModel>> get historyStream => _historyController.stream;
-
-  void showNotification({
-    required String title,
-    required String body,
-    NotificationType type = NotificationType.info,
-  }) {
-    final notification = NotificationModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: title,
-      body: body,
-      type: type,
-      timestamp: DateTime.now(),
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
     );
 
-    _history.insert(0, notification);
-    if (_history.length > 50) {
-      _history.removeLast();
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+
+    await _notificationsPlugin.initialize(
+      settings: initSettings,
+    );
+
+    // Solicitar permissões no Android 13+ (SDK 33+)
+    final androidImplementation = _notificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImplementation != null) {
+      await androidImplementation.requestNotificationsPermission();
     }
-    _historyController.add(_history);
 
-    // Atualiza o estado da notificação ativa (para o banner de overlay)
-    state = notification;
-
-    // Fecha automaticamente o banner após 5 segundos
-    Future.delayed(const Duration(seconds: 5), () {
-      if (state?.id == notification.id) {
-        state = null;
-      }
-    });
+    _initialized = true;
   }
 
-  void clearActive() {
-    state = null;
+  Future<void> showNotification({
+    required int id,
+    required String title,
+    required String body,
+    bool ongoing = false,
+  }) async {
+    await init();
+
+    final androidDetails = AndroidNotificationDetails(
+      'rastro_channel_id_v2',
+      'Rastro Navegação',
+      channelDescription: 'Canal de instruções de navegação em tempo real do Rastro',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: true,
+      ongoing: ongoing,
+      autoCancel: !ongoing,
+      onlyAlertOnce: true,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _notificationsPlugin.show(
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: details,
+    );
   }
 
-  void clearHistory() {
-    _history.clear();
-    _historyController.add(_history);
+  Future<void> cancel(int id) async {
+    await _notificationsPlugin.cancel(id: id);
+  }
+
+  Future<void> cancelAll() async {
+    await _notificationsPlugin.cancelAll();
   }
 }
 
-final notificationProvider = StateNotifierProvider<NotificationNotifier, NotificationModel?>((ref) {
-  return NotificationNotifier();
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  return NotificationService();
 });

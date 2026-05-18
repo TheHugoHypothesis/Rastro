@@ -37,7 +37,7 @@ class AppearanceSection extends ConsumerWidget {
             height: 42,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isDark ? AppColors.primary.withOpacity(0.15) : AppColors.lightSurfaceElevated,
+              color: isDark ? AppColors.primary.withValues(alpha: 0.15) : AppColors.lightSurfaceElevated,
             ),
             child: Icon(isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded, color: primaryLight, size: 22),
           ),

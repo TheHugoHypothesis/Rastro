@@ -13,7 +13,7 @@ import '../providers/app_state_provider.dart';
 import '../providers/theme_provider.dart';
 import '../../domain/models/route_instruction.dart';
 import '../../core/theme/colors.dart';
-import '../../presentation/providers/user_profile_provider.dart';
+
 
 // Services & Mixins
 import '../../core/services/tts_service.dart';
@@ -21,7 +21,6 @@ import 'home/map_poi_mixin.dart';
 import '../../data/remote/poi_service.dart';
 
 import '../../core/services/notification_service.dart';
-import '../widgets/home/notification_banner_widget.dart';
 
 // UI Widgets
 import '../widgets/home/search_bar_widget.dart';
@@ -229,12 +228,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          color: surfaceColor.withOpacity(0.90),
+          color: surfaceColor.withValues(alpha: 0.90),
           shape: BoxShape.circle,
           border: Border.all(color: border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -270,7 +269,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
             decoration: BoxDecoration(
               boxShadow: [
                 BoxShadow(
-                  color: pinColor.withOpacity(0.4),
+                  color: pinColor.withValues(alpha: 0.4),
                   blurRadius: 8,
                   spreadRadius: 3,
                 ),
@@ -292,7 +291,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                 border: Border.all(color: surfaceColor, width: 3),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 5,
                     offset: const Offset(0, 2),
                   ),
@@ -394,11 +393,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
         
         TtsService().speak('${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)} metros');
 
-        // Enviar notificação de início de rota (RF014)
-        ref.read(notificationProvider.notifier).showNotification(
-          title: 'Rota Iniciada!',
-          body: 'Destino a ${(routeData.distance / 1000).toStringAsFixed(1)} km (~${(routeData.duration / 60).toStringAsFixed(0)} min). Tenha uma boa pedalada!',
-          type: NotificationType.route,
+        // Enviar notificação de início de rota no sistema (RF014)
+        ref.read(notificationServiceProvider).showNotification(
+          id: 99,
+          title: 'Rastro - Rota Iniciada!',
+          body: 'Destino a ${(routeData.distance / 1000).toStringAsFixed(1)} km (~${(routeData.duration / 60).toStringAsFixed(0)} min). Boa pedalada!',
+          ongoing: true,
         );
       } else {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nenhuma rota encontrada.')));
@@ -712,7 +712,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                                 color: Colors.white,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.25),
+                                    color: Colors.black.withValues(alpha: 0.25),
                                     blurRadius: 4,
                                     spreadRadius: 1,
                                   ),
@@ -822,11 +822,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                 onSpeak: () => TtsService().speak('${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)} metros'),
                 onClose: () async {
                   setState(() { _routeAccepted = false; _currentSteps.clear(); _routePoints.clear(); });
-                  ref.read(notificationProvider.notifier).showNotification(
-                    title: 'Navegação Encerrada',
-                    body: 'A rota turn-by-turn foi fechada.',
-                    type: NotificationType.info,
-                  );
+                  ref.read(notificationServiceProvider).cancelAll();
                 },
                 onNext: () {
                   if (_currentStepIndex < _currentSteps.length - 1) {
@@ -834,10 +830,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                       _currentStepIndex++;
                     });
                     TtsService().speak('${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)} metros');
-                    ref.read(notificationProvider.notifier).showNotification(
-                      title: 'Próxima Instrução',
+                    ref.read(notificationServiceProvider).showNotification(
+                      id: 99,
+                      title: 'Rastro - Próxima Instrução',
                       body: '${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)}m.',
-                      type: NotificationType.route,
+                      ongoing: true,
                     );
                   }
                 },
@@ -847,10 +844,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                       _currentStepIndex--;
                     });
                     TtsService().speak('${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)} metros');
-                    ref.read(notificationProvider.notifier).showNotification(
-                      title: 'Instrução Anterior',
+                    ref.read(notificationServiceProvider).showNotification(
+                      id: 99,
+                      title: 'Rastro - Instrução Anterior',
                       body: '${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)}m.',
-                      type: NotificationType.route,
+                      ongoing: true,
                     );
                   }
                 },
@@ -919,11 +917,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                   _originSearchController.clear();
                   if (_lastKnownPosition != null) _mapController.move(_lastKnownPosition!, 18.0);
                   
-                  ref.read(notificationProvider.notifier).showNotification(
-                    title: 'Viagem Cancelada',
-                    body: 'A navegação ativa foi encerrada.',
-                    type: NotificationType.info,
-                  );
+                  ref.read(notificationServiceProvider).cancelAll();
                 },
               ),
             )
@@ -949,22 +943,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
               ),
             ),
             
-          // Banner de Notificação de Rota (RF014)
-          Consumer(
-            builder: (context, ref, child) {
-              final activeNotification = ref.watch(notificationProvider);
-              if (activeNotification == null) return const SizedBox.shrink();
-              return Positioned(
-                top: MediaQuery.of(context).padding.top + 16,
-                left: 0, right: 0,
-                child: NotificationBannerWidget(
-                  notification: activeNotification,
-                  isDark: _isDark,
-                  onDismiss: () => ref.read(notificationProvider.notifier).clearActive(),
-                ),
-              );
-            },
-          ),
         ],
       ),
     ));
@@ -975,12 +953,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _surfaceColor.withOpacity(0.95),
+        color: _surfaceColor.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withValues(alpha: 0.12),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -1036,7 +1014,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
             height: 38,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: _isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+              color: _isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: _isDark ? Colors.white12 : Colors.black12),
             ),
@@ -1087,7 +1065,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
             height: 38,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: _isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+              color: _isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: _isDark ? Colors.white12 : Colors.black12),
             ),
@@ -1222,7 +1200,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                 ? Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.12),
+                      color: primaryColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -1306,7 +1284,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
               ? Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _primaryColor.withOpacity(0.12),
+                    color: _primaryColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -1361,7 +1339,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
             decoration: BoxDecoration(
               boxShadow: [
                 BoxShadow(
-                  color: pinColor.withOpacity(0.4),
+                  color: pinColor.withValues(alpha: 0.4),
                   blurRadius: 8,
                   spreadRadius: 3,
                 ),
@@ -1382,7 +1360,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                 border: Border.all(color: surfaceColor, width: 3),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 5,
                     offset: const Offset(0, 2),
                   ),

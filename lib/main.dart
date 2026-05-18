@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/colors.dart';
-import 'presentation/screens/home_screen.dart';
+
 import 'presentation/providers/theme_provider.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';

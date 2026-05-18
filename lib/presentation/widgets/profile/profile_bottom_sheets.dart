@@ -134,7 +134,7 @@ void showEditProfileSheet(BuildContext context, WidgetRef ref, dynamic profile,
                 gradient: isDark ? AppColors.purpleGradient : null,
                 color: isDark ? null : AppColors.lightPrimary,
                 borderRadius: BorderRadius.circular(18),
-                boxShadow: isDark ? [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 12)] : [],
+                boxShadow: isDark ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 12)] : [],
               ),
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(

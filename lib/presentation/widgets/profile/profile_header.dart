@@ -42,9 +42,9 @@ class ProfileHeader extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: isDark ? AppColors.surface : AppColors.lightSurface,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isDark ? AppColors.primary.withOpacity(0.5) : AppColors.lightBorder),
+                border: Border.all(color: isDark ? AppColors.primary.withValues(alpha: 0.5) : AppColors.lightBorder),
                 boxShadow: isDark
-                    ? [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 8)]
+                    ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 8)]
                     : [],
               ),
               child: Row(
@@ -94,8 +94,8 @@ class ProfileHeader extends ConsumerWidget {
                   gradient: isDark ? AppColors.purpleGradient : null,
                   color: isDark ? null : AppColors.lightPrimary,
                   boxShadow: isDark
-                      ? [BoxShadow(color: AppColors.primary.withOpacity(0.5), blurRadius: 24, spreadRadius: 4)]
-                      : [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 16)],
+                      ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.5), blurRadius: 24, spreadRadius: 4)]
+                      : [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 16)],
                 ),
                 child: const Icon(Icons.person_rounded, size: 48, color: Colors.white),
               ),

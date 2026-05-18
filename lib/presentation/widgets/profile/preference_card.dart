@@ -47,7 +47,7 @@ class PreferenceCard extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isDark ? AppColors.primary.withOpacity(0.15) : AppColors.lightSurfaceElevated,
+                color: isDark ? AppColors.primary.withValues(alpha: 0.15) : AppColors.lightSurfaceElevated,
               ),
               child: Icon(icon, color: primaryLight, size: 20),
             ),

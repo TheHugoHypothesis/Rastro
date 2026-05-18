@@ -32,7 +32,7 @@ class StatCard extends StatelessWidget {
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: isDark ? AppColors.border : AppColors.lightBorder),
-          boxShadow: isDark ? [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 8)] : [],
+          boxShadow: isDark ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 8)] : [],
         ),
         child: Column(
           children: [
