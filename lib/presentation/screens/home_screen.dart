@@ -20,6 +20,9 @@ import '../../core/services/tts_service.dart';
 import 'home/map_poi_mixin.dart';
 import '../../data/remote/poi_service.dart';
 
+import '../../core/services/notification_service.dart';
+import '../widgets/home/notification_banner_widget.dart';
+
 // UI Widgets
 import '../widgets/home/search_bar_widget.dart';
 import '../widgets/home/avatar_button.dart';
@@ -390,6 +393,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
         _mapController.fitCamera(CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(50)));
         
         TtsService().speak('${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)} metros');
+
+        // Enviar notificação de início de rota (RF014)
+        ref.read(notificationProvider.notifier).showNotification(
+          title: 'Rota Iniciada!',
+          body: 'Destino a ${(routeData.distance / 1000).toStringAsFixed(1)} km (~${(routeData.duration / 60).toStringAsFixed(0)} min). Tenha uma boa pedalada!',
+          type: NotificationType.route,
+        );
       } else {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nenhuma rota encontrada.')));
       }
@@ -812,6 +822,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                 onSpeak: () => TtsService().speak('${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)} metros'),
                 onClose: () async {
                   setState(() { _routeAccepted = false; _currentSteps.clear(); _routePoints.clear(); });
+                  ref.read(notificationProvider.notifier).showNotification(
+                    title: 'Navegação Encerrada',
+                    body: 'A rota turn-by-turn foi fechada.',
+                    type: NotificationType.info,
+                  );
+                },
+                onNext: () {
+                  if (_currentStepIndex < _currentSteps.length - 1) {
+                    setState(() {
+                      _currentStepIndex++;
+                    });
+                    TtsService().speak('${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)} metros');
+                    ref.read(notificationProvider.notifier).showNotification(
+                      title: 'Próxima Instrução',
+                      body: '${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)}m.',
+                      type: NotificationType.route,
+                    );
+                  }
+                },
+                onPrevious: () {
+                  if (_currentStepIndex > 0) {
+                    setState(() {
+                      _currentStepIndex--;
+                    });
+                    TtsService().speak('${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)} metros');
+                    ref.read(notificationProvider.notifier).showNotification(
+                      title: 'Instrução Anterior',
+                      body: '${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)}m.',
+                      type: NotificationType.route,
+                    );
+                  }
                 },
               ),
             ),
@@ -877,6 +918,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                   _searchController.clear();
                   _originSearchController.clear();
                   if (_lastKnownPosition != null) _mapController.move(_lastKnownPosition!, 18.0);
+                  
+                  ref.read(notificationProvider.notifier).showNotification(
+                    title: 'Viagem Cancelada',
+                    body: 'A navegação ativa foi encerrada.',
+                    type: NotificationType.info,
+                  );
                 },
               ),
             )
@@ -901,6 +948,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                 previewDuration: _previewDuration,
               ),
             ),
+            
+          // Banner de Notificação de Rota (RF014)
+          Consumer(
+            builder: (context, ref, child) {
+              final activeNotification = ref.watch(notificationProvider);
+              if (activeNotification == null) return const SizedBox.shrink();
+              return Positioned(
+                top: MediaQuery.of(context).padding.top + 16,
+                left: 0, right: 0,
+                child: NotificationBannerWidget(
+                  notification: activeNotification,
+                  isDark: _isDark,
+                  onDismiss: () => ref.read(notificationProvider.notifier).clearActive(),
+                ),
+              );
+            },
+          ),
         ],
       ),
     ));

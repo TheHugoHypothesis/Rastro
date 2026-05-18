@@ -9,6 +9,8 @@ class TurnByTurnCard extends StatelessWidget {
   final int totalSteps;
   final VoidCallback onSpeak;
   final VoidCallback onClose;
+  final VoidCallback? onNext;
+  final VoidCallback? onPrevious;
 
   const TurnByTurnCard({
     super.key,
@@ -18,6 +20,8 @@ class TurnByTurnCard extends StatelessWidget {
     required this.totalSteps,
     required this.onSpeak,
     required this.onClose,
+    this.onNext,
+    this.onPrevious,
   });
 
   @override
@@ -76,7 +80,26 @@ class TurnByTurnCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text('${step.distance.toStringAsFixed(0)} m', style: TextStyle(color: subtextColor, fontWeight: FontWeight.w600, fontSize: 13)),
                     const Spacer(),
-                    Text('${stepIndex + 1} / $totalSteps', style: TextStyle(color: subtextColor, fontSize: 12, fontWeight: FontWeight.w600)),
+                    
+                    // Controles de Navegação de Rota Manuais (RF014)
+                    IconButton(
+                      icon: Icon(Icons.chevron_left_rounded, size: 20, color: stepIndex > 0 ? subtextColor : subtextColor.withOpacity(0.3)),
+                      onPressed: stepIndex > 0 ? onPrevious : null,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${stepIndex + 1} / $totalSteps',
+                      style: TextStyle(color: subtextColor, fontSize: 12, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(width: 6),
+                    IconButton(
+                      icon: Icon(Icons.chevron_right_rounded, size: 20, color: stepIndex < totalSteps - 1 ? subtextColor : subtextColor.withOpacity(0.3)),
+                      onPressed: stepIndex < totalSteps - 1 ? onNext : null,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
                   ],
                 ),
               ],
@@ -87,3 +110,4 @@ class TurnByTurnCard extends StatelessWidget {
     );
   }
 }
+
