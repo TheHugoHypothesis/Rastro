@@ -574,6 +574,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
     final newIsDark = themeMode == ThemeMode.dark;
     final isOnline = ref.watch(connectivityProvider);
     final isTtsEnabled = ref.watch(ttsEnabledProvider);
+    final bottomPad = MediaQuery.of(context).padding.bottom;
     
     if (newIsDark != _isDark) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -898,11 +899,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
             duration: const Duration(milliseconds: 320),
             curve: Curves.easeInOut,
             right: 16,
-            bottom: !_routeAccepted
+            bottom: (!_routeAccepted
                 ? (_destinationPoint != null
                     ? (_panelExpanded ? 390 : 190)
                     : 32)
-                : 32,
+                : 32) + bottomPad,
             child: AnimatedOpacity(
               opacity: !_routeAccepted ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 200),
@@ -987,7 +988,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
 
           // POI Loading Indicator
           Positioned(
-            bottom: _destinationPoint != null ? 100 : 32,
+            bottom: (_destinationPoint != null ? 100 : 32) + bottomPad,
             left: 0, right: 0,
             child: IgnorePointer(
               child: AnimatedOpacity(
