@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../core/theme/colors.dart';
 import '../../providers/app_state_provider.dart';
 import '../../../data/remote/poi_service.dart';
+import '../../../core/services/haptic_service.dart';
 
 class SearchBarWidget extends ConsumerStatefulWidget {
   final bool isDark;
@@ -49,7 +50,10 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
       searchController: widget.searchController,
       builder: (context, controller) {
         return GestureDetector(
-          onTap: () => controller.openView(),
+          onTap: () {
+            HapticService().selectionClick();
+            controller.openView();
+          },
           child: Container(
             height: 48,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -124,6 +128,7 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
                 title: Text(label, style: TextStyle(color: textColor, fontWeight: FontWeight.w800)),
                 subtitle: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: subtextColor)),
                 onTap: () {
+                  HapticService().selectionClick();
                   controller.closeView(label);
                   widget.onAddressSelected(LatLng(lat, lon), title: label, subtitle: title);
                 },
@@ -157,6 +162,7 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
                 title: Text(title, style: TextStyle(color: textColor, fontWeight: FontWeight.w600)),
                 subtitle: subtitle.isNotEmpty ? Text(subtitle, style: TextStyle(color: subtextColor)) : null,
                 onTap: () {
+                  HapticService().selectionClick();
                   controller.closeView(title);
                   widget.onAddressSelected(LatLng(lat, lon));
                 },
@@ -228,6 +234,7 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
                       )
                     : null,
                 onTap: () {
+                  HapticService().selectionClick();
                   controller.closeView(title);
                   widget.onAddressSelected(poi.point);
                 },
@@ -316,6 +323,7 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
                       )
                     : null,
                 onTap: () {
+                  HapticService().selectionClick();
                   ref.read(preferencesServiceProvider).addRecentSearch(title, sub, lat, lon);
                   controller.closeView(title);
                   widget.onAddressSelected(LatLng(lat, lon));

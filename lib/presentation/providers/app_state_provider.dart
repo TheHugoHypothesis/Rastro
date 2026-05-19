@@ -7,6 +7,7 @@ import '../../domain/models/route_preference.dart';
 import '../../data/local/preferences_service.dart';
 import '../../data/remote/routing_service.dart';
 import '../../core/services/tts_service.dart';
+import '../../core/services/haptic_service.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) => throw UnimplementedError());
 
@@ -210,3 +211,23 @@ class FrequentAddressesNotifier extends Notifier<List<Map<String, dynamic>>> {
 }
 
 final frequentAddressesProvider = NotifierProvider<FrequentAddressesNotifier, List<Map<String, dynamic>>>(FrequentAddressesNotifier.new);
+
+class HapticEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final prefs = ref.watch(preferencesServiceProvider);
+    final enabled = prefs.prefs.getBool('haptic_enabled_pref') ?? true;
+    HapticService().isEnabled = enabled;
+    return enabled;
+  }
+
+  void toggle() {
+    final prefs = ref.read(preferencesServiceProvider);
+    final newValue = !state;
+    prefs.prefs.setBool('haptic_enabled_pref', newValue);
+    HapticService().isEnabled = newValue;
+    state = newValue;
+  }
+}
+
+final hapticEnabledProvider = NotifierProvider<HapticEnabledNotifier, bool>(HapticEnabledNotifier.new);

@@ -5,6 +5,7 @@ import '../../../core/theme/colors.dart';
 import '../../../domain/models/bike_type.dart';
 import '../../../domain/models/route_preference.dart';
 import '../../providers/app_state_provider.dart';
+import '../../../core/services/haptic_service.dart';
 
 class CollapsiblePanel extends ConsumerStatefulWidget {
   final bool isDark;
@@ -67,7 +68,10 @@ class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
           children: [
             // Drag handle + toggle
             GestureDetector(
-              onTap: () => widget.onExpansionChanged(!widget.isExpanded),
+              onTap: () {
+                HapticService().selectionClick();
+                widget.onExpansionChanged(!widget.isExpanded);
+              },
               behavior: HitTestBehavior.opaque,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -159,7 +163,10 @@ class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
                 children: BikeType.values.map((type) {
                   final isSelected = selectedBike == type;
                   return GestureDetector(
-                    onTap: () => ref.read(bikeTypeProvider.notifier).updateBikeType(type),
+                    onTap: () {
+                      HapticService().selectionClick();
+                      ref.read(bikeTypeProvider.notifier).updateBikeType(type);
+                    },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -208,7 +215,10 @@ class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
                 children: RouteStrategy.values.map((strategy) {
                   final isSelected = selectedStrategy == strategy;
                   return GestureDetector(
-                    onTap: () => ref.read(routeStrategyProvider.notifier).updateStrategy(strategy),
+                    onTap: () {
+                      HapticService().selectionClick();
+                      ref.read(routeStrategyProvider.notifier).updateStrategy(strategy);
+                    },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
@@ -263,6 +273,7 @@ class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   ),
                   onPressed: () async {
+                    HapticService().selectionClick();
                     await widget.onTraceRoute();
                   },
                   child: Row(

@@ -17,6 +17,7 @@ import '../../core/theme/colors.dart';
 
 // Services & Mixins
 import '../../core/services/tts_service.dart';
+import '../../core/services/haptic_service.dart';
 import 'home/map_poi_mixin.dart';
 import '../../data/remote/poi_service.dart';
 
@@ -250,6 +251,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
 
     return GestureDetector(
       onTap: () {
+        HapticService().selectionClick();
         setState(() {
           _lockRotation = !_lockRotation;
           if (_lockRotation && _isMapReady) {
@@ -429,6 +431,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
         _mapController.fitCamera(CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(50)));
         
         TtsService().speak('${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)} metros');
+        HapticService().vibrateTurnChange();
 
         // Enviar notificação de início de rota no sistema (RF014)
         ref.read(notificationServiceProvider).showNotification(
@@ -498,16 +501,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
 
             return AnimatedPoiMarker(
               child: GestureDetector(
-                onTap: () => showPoiDetailsSheet(
-                  context: context,
-                  poi: poi,
-                  isDark: _isDark,
-                  surfaceColor: _surfaceColor,
-                  textColor: _textColor,
-                  poiColor: color,
-                  poiIconData: iconData,
-                  onAddressSelected: _onAddressSelected,
-                ),
+                onTap: () {
+                  HapticService().selectionClick();
+                  showPoiDetailsSheet(
+                    context: context,
+                    poi: poi,
+                    isDark: _isDark,
+                    surfaceColor: _surfaceColor,
+                    textColor: _textColor,
+                    poiColor: color,
+                    poiIconData: iconData,
+                    onAddressSelected: _onAddressSelected,
+                  );
+                },
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -588,6 +594,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
       _updatePoiMarkersCache();
     }
 
+    ref.listen<bool>(connectivityProvider, (previous, next) {
+      if (next == false) {
+        HapticService().vibrateSafetyAlert();
+      }
+    });
+
     ref.listen<bool>(locationEnabledProvider, (previous, next) {
       if (next) {
         _initLocation();
@@ -597,6 +609,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
         setState(() {
           _lastKnownPosition = null;
         });
+        HapticService().vibrateSafetyAlert();
       }
     });
 
@@ -607,6 +620,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
         setState(() {
           _lastKnownPosition = null;
         });
+        HapticService().vibrateSafetyAlert();
       }
     });
 
@@ -650,6 +664,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
               onPositionChanged: _onPositionChanged,
               onMapReady: _onMapReady,
               onLongPress: (tapPosition, point) {
+                HapticService().lightImpact();
                 final addressFuture = ref.read(routingServiceProvider).reverseGeocode(point);
                 showCoordinateDetailsSheet(
                   context: context,
@@ -747,6 +762,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                       alignment: Alignment.center,
                       child: GestureDetector(
                         onTap: () {
+                          HapticService().selectionClick();
                           final addressFuture = Future.value('$label: $title');
                           showCoordinateDetailsSheet(
                             context: context,
@@ -921,6 +937,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                     LocationFab(
                       isDark: _isDark,
                       onPressed: () async {
+                        HapticService().selectionClick();
                         if (!ref.read(locationConsentProvider)) {
                           _showLocationConsentSheetIfNeeded();
                           return;
@@ -965,6 +982,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                       _currentStepIndex++;
                     });
                     TtsService().speak('${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)} metros');
+                    HapticService().vibrateTurnChange();
                     ref.read(notificationServiceProvider).showNotification(
                       id: 99,
                       title: 'Rastro - Próxima Instrução',
@@ -979,6 +997,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                       _currentStepIndex--;
                     });
                     TtsService().speak('${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)} metros');
+                    HapticService().vibrateTurnChange();
                     ref.read(notificationServiceProvider).showNotification(
                       id: 99,
                       title: 'Rastro - Instrução Anterior',

@@ -16,6 +16,7 @@ import '../widgets/profile/frequent_addresses_sheet.dart';
 
 import '../widgets/profile/activity_report_widget.dart';
 import '../../domain/models/activity_record.dart';
+import '../../core/services/haptic_service.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -157,6 +158,76 @@ class ProfileScreen extends ConsumerWidget {
                   AppearanceSection(
                     isDark: isDark, surfaceColor: surfaceColor, textColor: textColor,
                     subtextColor: subtextColor, borderColor: borderColor, primaryLight: primaryLight,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Seção: Acessibilidade e Feedback (RNF014)
+                  Text('Acessibilidade e Feedback', style: TextStyle(color: subtextColor, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1)),
+                  const SizedBox(height: 12),
+
+                  Container(
+                    decoration: BoxDecoration(
+                      color: surfaceColor,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: borderColor),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        // Switch do TTS (Voz de Navegação)
+                        Row(
+                          children: [
+                            Icon(Icons.volume_up_rounded, color: primaryLight, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Instruções por Voz', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 14)),
+                                  const SizedBox(height: 2),
+                                  Text('Sintetizador de voz para direções (TTS)', style: TextStyle(color: subtextColor, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: ref.watch(ttsEnabledProvider),
+                              activeTrackColor: primaryLight,
+                              onChanged: (val) {
+                                ref.read(ttsEnabledProvider.notifier).toggle();
+                              },
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 24),
+                        // Switch do Feedback Tátil (Vibração)
+                        Row(
+                          children: [
+                            Icon(Icons.vibration_rounded, color: primaryLight, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Feedback Tátil', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 14)),
+                                  const SizedBox(height: 2),
+                                  Text('Vibrar nas curvas e alertas importantes', style: TextStyle(color: subtextColor, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: ref.watch(hapticEnabledProvider),
+                              activeTrackColor: primaryLight,
+                              onChanged: (val) {
+                                ref.read(hapticEnabledProvider.notifier).toggle();
+                                if (val) {
+                                  HapticService().lightImpact();
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
 
