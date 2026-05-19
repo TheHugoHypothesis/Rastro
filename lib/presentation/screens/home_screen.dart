@@ -574,7 +574,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
     final newIsDark = themeMode == ThemeMode.dark;
     final isOnline = ref.watch(connectivityProvider);
     final isTtsEnabled = ref.watch(ttsEnabledProvider);
-    final bottomPad = MediaQuery.of(context).padding.bottom;
+    final systemBottomPad = MediaQuery.of(context).padding.bottom;
+    final bottomPad = systemBottomPad > 0 ? systemBottomPad : 64.0;
     
     if (newIsDark != _isDark) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -668,6 +669,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                     ? "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
                     : "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
                 userAgentPackageName: 'com.rastro.app',
+                tileBuilder: (context, tileWidget, tile) {
+                  return Container(
+                    color: _isDark ? const Color(0xFF13131A) : Colors.white,
+                    child: tileWidget,
+                  );
+                },
               ),
               
               if (_routePoints.isNotEmpty)
