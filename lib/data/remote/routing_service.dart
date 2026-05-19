@@ -5,8 +5,14 @@ import 'package:latlong2/latlong.dart';
 import '../../domain/models/bike_type.dart';
 import '../../domain/models/route_preference.dart';
 import '../../domain/models/route_instruction.dart';
+import '../../domain/models/cached_route.dart';
+import '../local/preferences_service.dart';
 
 class RoutingService {
+  final PreferencesService _prefsService;
+
+  RoutingService(this._prefsService);
+
   /// Obtém o caminho de rota detalhado da API OSRM
   Future<({List<LatLng> points, List<RouteInstruction> instructions, double distance, double duration})> getRoutePath({
     required LatLng start,
@@ -60,6 +66,20 @@ class RoutingService {
           // Média de velocidade para bicicleta de 18 km/h (5 m/s)
           duration = distance / 5.0;
 
+          // Salva a rota obtida no cache local
+          final cachedRoute = CachedRoute(
+            start: start,
+            end: end,
+            bikeType: bikeType,
+            strategy: strategy,
+            points: points,
+            instructions: instructions,
+            distance: distance,
+            duration: duration,
+            timestamp: DateTime.now().millisecondsSinceEpoch,
+          );
+          _prefsService.addRouteToCache(cachedRoute);
+
           return (
             points: points,
             instructions: instructions,
@@ -69,10 +89,28 @@ class RoutingService {
         }
       }
     } catch (e) {
-      debugPrint('Erro de requisição na API OSRM: $e');
+      debugPrint('Erro de requisição na API OSRM, buscando cache local: $e');
     }
 
-    // Fallback amigável: linha reta caso a API do OSRM esteja fora do ar
+    // Fallback inteligente: buscar do cache local se estiver offline
+    final cached = _prefsService.findCachedRoute(
+      start: start,
+      end: end,
+      bikeType: bikeType,
+      strategy: strategy,
+    );
+
+    if (cached != null) {
+      debugPrint('Rota recuperada do cache offline com sucesso!');
+      return (
+        points: cached.points,
+        instructions: cached.instructions,
+        distance: cached.distance,
+        duration: cached.duration,
+      );
+    }
+
+    // Fallback amigável: linha reta caso a API do OSRM esteja fora do ar e sem cache
     final distanceCalculator = const Distance();
     final dist = distanceCalculator.as(LengthUnit.Meter, start, end);
     final duration = dist / 5.0; // Assume 18 km/h (5 m/s)
@@ -80,7 +118,7 @@ class RoutingService {
     return (
       points: [start, end],
       instructions: [
-        RouteInstruction(instruction: 'Siga na direção do seu destino', distance: dist, name: 'Destino'),
+        RouteInstruction(instruction: 'Siga na direção do seu destino (Sem conexão)', distance: dist, name: 'Destino'),
         RouteInstruction(instruction: 'Você chegou ao seu destino!', distance: 0, name: 'Destino'),
       ],
       distance: dist,

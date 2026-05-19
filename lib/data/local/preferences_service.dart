@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/bike_type.dart';
 import '../../domain/models/route_preference.dart';
 import '../../domain/models/user_profile.dart';
 import '../../domain/models/activity_record.dart';
+import '../../domain/models/cached_route.dart';
 import '../remote/poi_service.dart';
 
 class PreferencesService {
@@ -171,5 +173,69 @@ class PreferencesService {
 
   void clearActivityRecords() {
     prefs.remove(keyActivityRecords);
+  }
+
+  static const String keyRouteCache = 'route_cache_pref';
+
+  void saveCachedRoutes(List<CachedRoute> routes) {
+    final jsonList = routes.map((r) => r.toJson()).toList();
+    prefs.setString(keyRouteCache, jsonEncode(jsonList));
+  }
+
+  List<CachedRoute> loadCachedRoutes() {
+    final jsonString = prefs.getString(keyRouteCache);
+    if (jsonString != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(jsonString);
+        return decoded.map((e) => CachedRoute.fromJson(e as Map<String, dynamic>)).toList();
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  }
+
+  void addRouteToCache(CachedRoute route) {
+    final routes = loadCachedRoutes();
+
+    // Evita duplicados exatos
+    routes.removeWhere((r) =>
+        r.start.latitude == route.start.latitude &&
+        r.start.longitude == route.start.longitude &&
+        r.end.latitude == route.end.latitude &&
+        r.end.longitude == route.end.longitude &&
+        r.bikeType == route.bikeType &&
+        r.strategy == route.strategy);
+
+    routes.insert(0, route);
+
+    // Mantém limite de 30 rotas em cache
+    if (routes.length > 30) {
+      routes.removeRange(30, routes.length);
+    }
+    saveCachedRoutes(routes);
+  }
+
+  CachedRoute? findCachedRoute({
+    required LatLng start,
+    required LatLng end,
+    required BikeType bikeType,
+    required RouteStrategy strategy,
+  }) {
+    final routes = loadCachedRoutes();
+    const distanceCalculator = Distance();
+
+    for (var route in routes) {
+      if (route.bikeType == bikeType && route.strategy == strategy) {
+        final startDist = distanceCalculator.as(LengthUnit.Meter, start, route.start);
+        final endDist = distanceCalculator.as(LengthUnit.Meter, end, route.end);
+
+        // Raio de proximidade de 50 metros para hit no cache
+        if (startDist <= 50 && endDist <= 50) {
+          return route;
+        }
+      }
+    }
+    return null;
   }
 }

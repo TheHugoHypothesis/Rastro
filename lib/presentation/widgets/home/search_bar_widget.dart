@@ -238,11 +238,8 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
             }
 
             final widgets = sortedSuggestions.map((info) {
-              final addressObj = info['address'] as Map<String, dynamic>? ?? {};
-              final title = info['name']?.toString() ?? addressObj['road']?.toString() ?? 'Local';
-              final city = addressObj['city'] ?? addressObj['town'] ?? addressObj['municipality'];
-              final state = addressObj['state'];
-              final sub = [city, state].where((e) => e != null).join(', ');
+              final title = info['title']?.toString() ?? 'Local';
+              final sub = info['subtitle']?.toString() ?? '';
               final lat = double.tryParse(info['lat']?.toString() ?? '') ?? 0.0;
               final lon = double.tryParse(info['lon']?.toString() ?? '') ?? 0.0;
 

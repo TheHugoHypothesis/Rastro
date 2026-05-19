@@ -53,6 +53,22 @@ class RouteInstruction {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'instruction': instruction,
+      'distance': distance,
+      'name': name,
+    };
+  }
+
+  factory RouteInstruction.fromJson(Map<String, dynamic> json) {
+    return RouteInstruction(
+      instruction: json['instruction'] as String,
+      distance: (json['distance'] as num).toDouble(),
+      name: json['name'] as String? ?? '',
+    );
+  }
+
   static String _translateModifier(String modifier) {
     switch (modifier) {
       case 'right': return 'à direita';

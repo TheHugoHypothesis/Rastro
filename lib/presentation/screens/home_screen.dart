@@ -533,6 +533,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeProvider);
     final newIsDark = themeMode == ThemeMode.dark;
+    final isOnline = ref.watch(connectivityProvider);
     
     if (newIsDark != _isDark) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -942,6 +943,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                 previewDuration: _previewDuration,
               ),
             ),
+
+            // Connectivity Status Indicator
+            if (!isOnline)
+              Positioned(
+                top: MediaQuery.of(context).padding.top + (_routeAccepted ? 16 : (_destinationPoint == null ? 76 : 148)),
+                left: 24, right: 24,
+                child: AnimatedOpacity(
+                  opacity: 1.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _isDark ? const Color(0xFF2C1E45) : const Color(0xFFFFF6E6),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _isDark ? AppColors.primary : const Color(0xFFFFA500),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (_isDark ? AppColors.primary : const Color(0xFFFFA500)).withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.wifi_off_rounded,
+                          color: _isDark ? AppColors.primaryLight : const Color(0xFFD48800),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Sem Conexão • Usando Rotas em Cache',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: _isDark ? Colors.white : const Color(0xFF873800),
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             
         ],
       ),
@@ -1256,11 +1306,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
       }
 
       return sortedSuggestions.map((info) {
-        final addressObj = info['address'] as Map<String, dynamic>? ?? {};
-        final title = info['name']?.toString() ?? addressObj['road']?.toString() ?? 'Local';
-        final city = addressObj['city'] ?? addressObj['town'] ?? addressObj['municipality'];
-        final state = addressObj['state'];
-        final sub = [city, state].where((e) => e != null).join(', ');
+        final title = info['title']?.toString() ?? 'Local';
+        final sub = info['subtitle']?.toString() ?? '';
         final lat = double.tryParse(info['lat']?.toString() ?? '') ?? 0.0;
         final lon = double.tryParse(info['lon']?.toString() ?? '') ?? 0.0;
 
