@@ -671,9 +671,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                 userAgentPackageName: 'com.rastro.app',
                 keepBuffer: 3,
                 panBuffer: 2,
-                tileDisplay: const TileDisplay.fadeIn(
-                  duration: Duration.zero,
-                ),
+                tileDisplay: const TileDisplay.instantaneous(),
               ),
               
               if (_routePoints.isNotEmpty)
