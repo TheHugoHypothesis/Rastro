@@ -159,3 +159,54 @@ class LocationEnabledNotifier extends Notifier<bool> {
 }
 
 final locationEnabledProvider = NotifierProvider<LocationEnabledNotifier, bool>(LocationEnabledNotifier.new);
+
+class FrequentAddressesNotifier extends Notifier<List<Map<String, dynamic>>> {
+  @override
+  List<Map<String, dynamic>> build() {
+    final prefs = ref.watch(preferencesServiceProvider);
+    return prefs.loadFrequentAddresses();
+  }
+
+  void setAddress({
+    required String id,
+    required String label,
+    required String title,
+    required String subtitle,
+    required double lat,
+    required double lon,
+  }) {
+    final prefs = ref.read(preferencesServiceProvider);
+    final current = List<Map<String, dynamic>>.from(state);
+    
+    current.removeWhere((item) => item['id'] == id);
+    current.add({
+      'id': id,
+      'label': label,
+      'title': title,
+      'subtitle': subtitle,
+      'lat': lat,
+      'lon': lon,
+    });
+    
+    prefs.saveFrequentAddresses(current);
+    state = current;
+  }
+
+  void removeAddress(String id) {
+    final prefs = ref.read(preferencesServiceProvider);
+    final current = List<Map<String, dynamic>>.from(state);
+    
+    current.removeWhere((item) => item['id'] == id);
+    
+    prefs.saveFrequentAddresses(current);
+    state = current;
+  }
+
+  void clearAll() {
+    final prefs = ref.read(preferencesServiceProvider);
+    prefs.saveFrequentAddresses([]);
+    state = [];
+  }
+}
+
+final frequentAddressesProvider = NotifierProvider<FrequentAddressesNotifier, List<Map<String, dynamic>>>(FrequentAddressesNotifier.new);

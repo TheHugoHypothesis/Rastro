@@ -723,6 +723,64 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                 
               MarkerLayer(
                 markers: [
+                  // Marcadores de Endereços Frequentes (Casa, Trabalho, etc.)
+                  ...ref.watch(frequentAddressesProvider).map((fav) {
+                    final lat = (fav['lat'] as num?)?.toDouble() ?? 0.0;
+                    final lon = (fav['lon'] as num?)?.toDouble() ?? 0.0;
+                    final id = fav['id']?.toString() ?? '';
+                    final label = fav['label']?.toString() ?? 'Favorito';
+                    final title = fav['title']?.toString() ?? '';
+                    
+                    final icon = id == 'home'
+                        ? Icons.home_rounded
+                        : (id == 'work' ? Icons.work_rounded : Icons.star_rounded);
+                        
+                    return Marker(
+                      point: LatLng(lat, lon),
+                      width: 50,
+                      height: 50,
+                      alignment: Alignment.center,
+                      child: GestureDetector(
+                        onTap: () {
+                          final addressFuture = Future.value('$label: $title');
+                          showCoordinateDetailsSheet(
+                            context: context,
+                            point: LatLng(lat, lon),
+                            addressFuture: addressFuture,
+                            isDark: _isDark,
+                            surfaceColor: _surfaceColor,
+                            textColor: _textColor,
+                            accentColor: _primaryColor,
+                            onAddressSelected: _onAddressSelected,
+                          );
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: _isDark ? AppColors.cardDark : Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: _isDark ? AppColors.primaryLight : AppColors.primary,
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.25),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              )
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            icon,
+                            color: _isDark ? AppColors.primaryLight : AppColors.primary,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+
                   // Destination Marker (Continua aparecendo com visual elegante durante todo o percurso)
                   if (_destinationPoint != null)
                     Marker(

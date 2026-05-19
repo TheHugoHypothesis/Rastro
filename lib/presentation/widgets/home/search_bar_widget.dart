@@ -90,7 +90,46 @@ class _SearchBarWidgetState extends ConsumerState<SearchBarWidget> {
         if (controller.text.isEmpty) {
           final history = ref.read(preferencesServiceProvider).loadSearchHistory();
           final pois = ref.read(preferencesServiceProvider).loadPois();
+          final favorites = ref.read(frequentAddressesProvider);
           final List<Widget> items = [];
+
+          if (favorites.isNotEmpty) {
+            items.add(
+              Padding(
+                padding: const EdgeInsets.only(left: 16, top: 12, bottom: 6),
+                child: Text(
+                  'Favoritos',
+                  style: TextStyle(
+                    color: primaryColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+            );
+            items.addAll(favorites.map((fav) {
+              final title = fav['title']?.toString() ?? '';
+              final label = fav['label']?.toString() ?? 'Favorito';
+              final id = fav['id']?.toString() ?? '';
+              final lat = (fav['lat'] as num?)?.toDouble() ?? 0.0;
+              final lon = (fav['lon'] as num?)?.toDouble() ?? 0.0;
+
+              final icon = id == 'home'
+                  ? Icons.home_rounded
+                  : (id == 'work' ? Icons.work_rounded : Icons.star_rounded);
+
+              return ListTile(
+                leading: Icon(icon, color: widget.isDark ? AppColors.primaryLight : AppColors.primary),
+                title: Text(label, style: TextStyle(color: textColor, fontWeight: FontWeight.w800)),
+                subtitle: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: subtextColor)),
+                onTap: () {
+                  controller.closeView(label);
+                  widget.onAddressSelected(LatLng(lat, lon), title: label, subtitle: title);
+                },
+              );
+            }));
+          }
 
           if (history.isNotEmpty) {
             items.add(

@@ -12,6 +12,7 @@ import '../widgets/profile/stat_card.dart';
 import '../widgets/profile/preference_card.dart';
 import '../widgets/profile/appearance_section.dart';
 import '../widgets/profile/profile_bottom_sheets.dart';
+import '../widgets/profile/frequent_addresses_sheet.dart';
 
 import '../widgets/profile/activity_report_widget.dart';
 import '../../domain/models/activity_record.dart';
@@ -124,6 +125,28 @@ class ProfileScreen extends ConsumerWidget {
                     primaryColor: primaryColor, primaryLight: primaryLight,
                     icon: Icons.alt_route_rounded, title: 'Estratégia padrão', value: routeStrategy.label,
                     onTap: () => showRouteStrategySelector(context, ref, routeStrategy, isDark, surfaceColor, textColor, subtextColor, primaryLight),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Seção: Favoritos e Locais
+                  Text('Favoritos e Locais', style: TextStyle(color: subtextColor, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1)),
+                  const SizedBox(height: 12),
+
+                  PreferenceCard(
+                    isDark: isDark, surfaceColor: surfaceColor, textColor: textColor,
+                    subtextColor: subtextColor, borderColor: borderColor,
+                    primaryColor: primaryColor, primaryLight: primaryLight,
+                    icon: Icons.star_rounded, title: 'Endereços Frequentes', value: 'Gerenciar Casa e Trabalho',
+                    onTap: () => showFrequentAddressesSheet(
+                      context: context,
+                      ref: ref,
+                      isDark: isDark,
+                      surfaceColor: surfaceColor,
+                      textColor: textColor,
+                      subtextColor: subtextColor,
+                      borderColor: borderColor,
+                      primaryLight: primaryLight,
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -249,6 +272,21 @@ class ProfileScreen extends ConsumerWidget {
                             ref.read(preferencesServiceProvider).saveCachedRoutes([]);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Cache de rotas offline limpo com sucesso!')),
+                            );
+                          },
+                        ),
+                        const Divider(height: 12),
+                        // Limpar endereços frequentes
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.delete_sweep_rounded, color: primaryLight, size: 20),
+                          title: Text('Limpar Endereços Frequentes', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 14)),
+                          subtitle: Text('Apagar locais favoritos salvos como Casa/Trabalho', style: TextStyle(color: subtextColor, fontSize: 12)),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () {
+                            ref.read(frequentAddressesProvider.notifier).clearAll();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Endereços frequentes limpos com sucesso!')),
                             );
                           },
                         ),

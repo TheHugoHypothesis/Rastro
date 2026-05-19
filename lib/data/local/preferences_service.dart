@@ -238,4 +238,23 @@ class PreferencesService {
     }
     return null;
   }
+
+  static const String keyFrequentAddresses = 'frequent_addresses_pref';
+
+  void saveFrequentAddresses(List<Map<String, dynamic>> addresses) {
+    prefs.setString(keyFrequentAddresses, jsonEncode(addresses));
+  }
+
+  List<Map<String, dynamic>> loadFrequentAddresses() {
+    final jsonString = prefs.getString(keyFrequentAddresses);
+    if (jsonString != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(jsonString);
+        return decoded.map((e) => Map<String, dynamic>.from(e)).toList();
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  }
 }
