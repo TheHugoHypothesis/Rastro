@@ -6,6 +6,7 @@ class TtsService {
 
   late FlutterTts _flutterTts;
   bool _isInitialized = false;
+  bool isEnabled = true;
 
   TtsService._internal() {
     _flutterTts = FlutterTts();
@@ -21,6 +22,7 @@ class TtsService {
   }
 
   Future<void> speak(String text) async {
+    if (!isEnabled) return;
     if (!_isInitialized) await init();
     await _flutterTts.speak(text);
   }

@@ -6,6 +6,7 @@ import '../../domain/models/bike_type.dart';
 import '../../domain/models/route_preference.dart';
 import '../../data/local/preferences_service.dart';
 import '../../data/remote/routing_service.dart';
+import '../../core/services/tts_service.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) => throw UnimplementedError());
 
@@ -100,3 +101,26 @@ class ConnectivityNotifier extends Notifier<bool> {
 }
 
 final connectivityProvider = NotifierProvider<ConnectivityNotifier, bool>(ConnectivityNotifier.new);
+
+class TtsEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final prefs = ref.watch(preferencesServiceProvider);
+    final enabled = prefs.prefs.getBool('tts_enabled_pref') ?? true;
+    TtsService().isEnabled = enabled;
+    return enabled;
+  }
+
+  void toggle() {
+    final prefs = ref.read(preferencesServiceProvider);
+    final newValue = !state;
+    prefs.prefs.setBool('tts_enabled_pref', newValue);
+    TtsService().isEnabled = newValue;
+    if (!newValue) {
+      TtsService().stop();
+    }
+    state = newValue;
+  }
+}
+
+final ttsEnabledProvider = NotifierProvider<TtsEnabledNotifier, bool>(TtsEnabledNotifier.new);

@@ -11,6 +11,8 @@ class TurnByTurnCard extends StatelessWidget {
   final VoidCallback onClose;
   final VoidCallback? onNext;
   final VoidCallback? onPrevious;
+  final bool isTtsEnabled;
+  final VoidCallback onToggleTts;
 
   const TurnByTurnCard({
     super.key,
@@ -20,6 +22,8 @@ class TurnByTurnCard extends StatelessWidget {
     required this.totalSteps,
     required this.onSpeak,
     required this.onClose,
+    required this.isTtsEnabled,
+    required this.onToggleTts,
     this.onNext,
     this.onPrevious,
   });
@@ -55,8 +59,19 @@ class TurnByTurnCard extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(child: Text(step.instruction, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white))),
                 IconButton(
-                  icon: const Icon(Icons.volume_up_rounded, color: Colors.white70, size: 20),
+                  icon: const Icon(Icons.replay_rounded, color: Colors.white70, size: 20),
                   onPressed: onSpeak,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(
+                    isTtsEnabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                    color: isTtsEnabled ? Colors.white : Colors.white54,
+                    size: 20,
+                  ),
+                  onPressed: onToggleTts,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),

@@ -10,7 +10,7 @@ class PoiDetailsSheet extends StatelessWidget {
   final Color textColor;
   final Color poiColor;
   final IconData poiIconData;
-  final Function(LatLng) onAddressSelected;
+  final Function(LatLng, {String? title, String? subtitle}) onAddressSelected;
 
   const PoiDetailsSheet({
     super.key,
@@ -86,7 +86,7 @@ class PoiDetailsSheet extends StatelessWidget {
                 ),
                 onPressed: () {
                   Navigator.pop(context);
-                  onAddressSelected(poi.point);
+                  onAddressSelected(poi.point, title: poi.name, subtitle: poi.category.label);
                 },
                 icon: const Icon(Icons.directions_bike_rounded, color: Colors.white),
                 label: const Text('Traçar Rota até aqui',
@@ -108,7 +108,7 @@ void showPoiDetailsSheet({
   required Color textColor,
   required Color poiColor,
   required IconData poiIconData,
-  required Function(LatLng) onAddressSelected,
+  required Function(LatLng, {String? title, String? subtitle}) onAddressSelected,
 }) {
   showModalBottomSheet(
     context: context,
@@ -126,14 +126,14 @@ void showPoiDetailsSheet({
   );
 }
 
-class CoordinateDetailsSheet extends StatelessWidget {
+class CoordinateDetailsSheet extends StatefulWidget {
   final LatLng point;
   final Future<String> addressFuture;
   final bool isDark;
   final Color surfaceColor;
   final Color textColor;
   final Color accentColor;
-  final Function(LatLng) onAddressSelected;
+  final Function(LatLng, {String? title, String? subtitle}) onAddressSelected;
 
   const CoordinateDetailsSheet({
     super.key,
@@ -147,6 +147,13 @@ class CoordinateDetailsSheet extends StatelessWidget {
   });
 
   @override
+  State<CoordinateDetailsSheet> createState() => _CoordinateDetailsSheetState();
+}
+
+class _CoordinateDetailsSheetState extends State<CoordinateDetailsSheet> {
+  String? _resolvedAddress;
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 8, 20, MediaQuery.of(context).padding.bottom + 20),
@@ -157,7 +164,7 @@ class CoordinateDetailsSheet extends StatelessWidget {
           Container(
             width: 40, height: 4, margin: const EdgeInsets.only(bottom: 20),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.border : AppColors.lightBorder, 
+              color: widget.isDark ? AppColors.border : AppColors.lightBorder, 
               borderRadius: BorderRadius.circular(2)
             )
           ),
@@ -166,7 +173,7 @@ class CoordinateDetailsSheet extends StatelessWidget {
             children: [
               Container(
                 width: 52, height: 52,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: accentColor),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: widget.accentColor),
                 child: const Icon(Icons.location_on_rounded, color: Colors.white, size: 28),
               ),
               const SizedBox(width: 14),
@@ -174,10 +181,10 @@ class CoordinateDetailsSheet extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Local Marcado', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? Colors.white54 : Colors.black54)),
+                    Text('Local Marcado', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: widget.isDark ? Colors.white54 : Colors.black54)),
                     const SizedBox(height: 2),
                     FutureBuilder<String>(
-                      future: addressFuture,
+                      future: widget.addressFuture,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
                           return const Padding(
@@ -190,11 +197,12 @@ class CoordinateDetailsSheet extends StatelessWidget {
                           );
                         }
                         if (snapshot.hasError || !snapshot.hasData) {
-                          return Text('Coordenadas Marcadas', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: textColor));
+                          return Text('Coordenadas Marcadas', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: widget.textColor));
                         }
+                        _resolvedAddress = snapshot.data;
                         return Text(
                           snapshot.data!,
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: textColor),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: widget.textColor),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         );
@@ -212,10 +220,10 @@ class CoordinateDetailsSheet extends StatelessWidget {
             height: 52,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: isDark ? AppColors.purpleGradient : null,
-                color: isDark ? null : AppColors.lightPrimary,
+                gradient: widget.isDark ? AppColors.purpleGradient : null,
+                color: widget.isDark ? null : AppColors.lightPrimary,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: isDark
+                boxShadow: widget.isDark
                     ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 14)]
                     : [],
               ),
@@ -227,7 +235,8 @@ class CoordinateDetailsSheet extends StatelessWidget {
                 ),
                 onPressed: () {
                   Navigator.pop(context);
-                  onAddressSelected(point);
+                  final addressStr = _resolvedAddress ?? 'Coordenadas Marcadas';
+                  widget.onAddressSelected(widget.point, title: 'Local Marcado', subtitle: addressStr);
                 },
                 icon: const Icon(Icons.directions_bike_rounded, color: Colors.white),
                 label: const Text('Traçar Rota até aqui',
@@ -249,7 +258,7 @@ void showCoordinateDetailsSheet({
   required Color surfaceColor,
   required Color textColor,
   required Color accentColor,
-  required Function(LatLng) onAddressSelected,
+  required Function(LatLng, {String? title, String? subtitle}) onAddressSelected,
 }) {
   showModalBottomSheet(
     context: context,

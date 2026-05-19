@@ -10,7 +10,7 @@ class SearchBarWidget extends ConsumerStatefulWidget {
   final bool isDark;
   final Color surfaceColor;
   final Color routeColor;
-  final Function(LatLng) onAddressSelected;
+  final Function(LatLng, {String? title, String? subtitle}) onAddressSelected;
   final SearchController searchController;
   final LatLng? userLocation;
 

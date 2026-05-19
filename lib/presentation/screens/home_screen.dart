@@ -316,8 +316,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
     );
   }
 
-  Future<void> _onAddressSelected(LatLng dest) async {
+  Future<void> _onAddressSelected(LatLng dest, {String? title, String? subtitle}) async {
     try {
+      if (title != null && subtitle != null) {
+        ref.read(preferencesServiceProvider).addRecentSearch(title, subtitle, dest.latitude, dest.longitude);
+      }
       setState(() { 
         _destinationPoint = dest; 
         _currentSteps.clear(); 
@@ -534,6 +537,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
     final themeMode = ref.watch(themeProvider);
     final newIsDark = themeMode == ThemeMode.dark;
     final isOnline = ref.watch(connectivityProvider);
+    final isTtsEnabled = ref.watch(ttsEnabledProvider);
     
     if (newIsDark != _isDark) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -825,6 +829,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                   setState(() { _routeAccepted = false; _currentSteps.clear(); _routePoints.clear(); });
                   ref.read(notificationServiceProvider).cancelAll();
                 },
+                isTtsEnabled: isTtsEnabled,
+                onToggleTts: () => ref.read(ttsEnabledProvider.notifier).toggle(),
                 onNext: () {
                   if (_currentStepIndex < _currentSteps.length - 1) {
                     setState(() {
