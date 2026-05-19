@@ -13,7 +13,7 @@ class AppColors {
 
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFFB0B0C8);
-  static const Color textMuted = Color(0xFF6B6B8A);
+  static const Color textMuted = Color(0xFF9E9EC0);
 
   static const Color routeColorDark = Color(0xFFA855F7); // Cor da rota no modo escuro
   static const Color border = Color(0xFF2D2D4E);
