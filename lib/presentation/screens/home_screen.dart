@@ -669,12 +669,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                     ? "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
                     : "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
                 userAgentPackageName: 'com.rastro.app',
-                tileBuilder: (context, tileWidget, tile) {
-                  return Container(
-                    color: _isDark ? const Color(0xFF13131A) : Colors.white,
-                    child: tileWidget,
-                  );
-                },
+                keepBuffer: 3,
+                panBuffer: 2,
+                tileDisplay: const TileDisplay.fadeIn(
+                  duration: Duration.zero,
+                ),
               ),
               
               if (_routePoints.isNotEmpty)
