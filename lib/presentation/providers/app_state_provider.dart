@@ -124,3 +124,38 @@ class TtsEnabledNotifier extends Notifier<bool> {
 }
 
 final ttsEnabledProvider = NotifierProvider<TtsEnabledNotifier, bool>(TtsEnabledNotifier.new);
+
+class LocationConsentNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final prefs = ref.watch(preferencesServiceProvider);
+    return prefs.prefs.getBool('location_consent_pref') ?? false;
+  }
+
+  void setConsent(bool consented) {
+    final prefs = ref.read(preferencesServiceProvider);
+    prefs.prefs.setBool('location_consent_pref', consented);
+    state = consented;
+    if (!consented) {
+      ref.read(locationEnabledProvider.notifier).setEnabled(false);
+    }
+  }
+}
+
+final locationConsentProvider = NotifierProvider<LocationConsentNotifier, bool>(LocationConsentNotifier.new);
+
+class LocationEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final prefs = ref.watch(preferencesServiceProvider);
+    return prefs.prefs.getBool('location_enabled_pref') ?? false;
+  }
+
+  void setEnabled(bool enabled) {
+    final prefs = ref.read(preferencesServiceProvider);
+    prefs.prefs.setBool('location_enabled_pref', enabled);
+    state = enabled;
+  }
+}
+
+final locationEnabledProvider = NotifierProvider<LocationEnabledNotifier, bool>(LocationEnabledNotifier.new);

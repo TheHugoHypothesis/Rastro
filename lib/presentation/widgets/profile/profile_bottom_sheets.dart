@@ -157,3 +157,101 @@ void showEditProfileSheet(BuildContext context, WidgetRef ref, dynamic profile,
     ),
   );
 }
+
+void showLocationConsentSheet({
+  required BuildContext context,
+  required WidgetRef ref,
+  required bool isDark,
+  required Color surfaceColor,
+  required Color textColor,
+  required Color subtextColor,
+  required Color borderColor,
+  required Color primaryLight,
+  required VoidCallback onAccept,
+}) {
+  showModalBottomSheet(
+    context: context,
+    isDismissible: false,
+    enableDrag: false,
+    backgroundColor: surfaceColor,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    builder: (ctx) => PopScope(
+      canPop: false,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.privacy_tip_rounded, color: AppColors.primaryLight, size: 48),
+              const SizedBox(height: 16),
+              Text(
+                'Consentimento de Privacidade',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: textColor),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'O Rastro respeita sua privacidade. Todos os seus dados de localização, buscas e rotas são processados e armazenados estritamente no seu dispositivo local e nunca são transmitidos a servidores externos.\n\nPara mostrar sua posição atual e traçar rotas automáticas a partir de onde você está, precisamos do seu consentimento explícito para acessar os dados de localização (GPS).',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: subtextColor, height: 1.4, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        side: BorderSide(color: borderColor, width: 2),
+                      ),
+                      onPressed: () {
+                        ref.read(locationConsentProvider.notifier).setConsent(false);
+                        Navigator.pop(ctx);
+                      },
+                      child: Text(
+                        'Recusar',
+                        style: TextStyle(color: textColor, fontWeight: FontWeight.w800, fontSize: 14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: isDark ? AppColors.purpleGradient : null,
+                        color: isDark ? null : AppColors.lightPrimary,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: isDark ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 12)] : [],
+                      ),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        onPressed: () {
+                          ref.read(locationConsentProvider.notifier).setConsent(true);
+                          ref.read(locationEnabledProvider.notifier).setEnabled(true);
+                          Navigator.pop(ctx);
+                          onAccept();
+                        },
+                        child: const Text(
+                          'Consinto',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}

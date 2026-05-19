@@ -137,6 +137,135 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
+                  // Seção: Privacidade e Dados (RNF012)
+                  Text('Privacidade e Dados', style: TextStyle(color: subtextColor, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1)),
+                  const SizedBox(height: 12),
+
+                  Container(
+                    decoration: BoxDecoration(
+                      color: surfaceColor,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: borderColor),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        // Switch do consentimento
+                        Row(
+                          children: [
+                            Icon(Icons.privacy_tip_rounded, color: primaryLight, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Consentimento de Localização', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 14)),
+                                  const SizedBox(height: 2),
+                                  Text('Permitir coleta local de GPS', style: TextStyle(color: subtextColor, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: ref.watch(locationConsentProvider),
+                              activeTrackColor: primaryLight,
+                              onChanged: (val) {
+                                ref.read(locationConsentProvider.notifier).setConsent(val);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(val ? 'Consentimento concedido.' : 'Consentimento revogado. Localização desativada.'),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 24),
+                        // Switch da localização ativa
+                        Row(
+                          children: [
+                            Icon(Icons.location_on_rounded, color: primaryLight, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Localização Ativa', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 14)),
+                                  const SizedBox(height: 2),
+                                  Text('Ativar/desativar GPS temporariamente', style: TextStyle(color: subtextColor, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: ref.watch(locationEnabledProvider),
+                              activeTrackColor: primaryLight,
+                              onChanged: ref.watch(locationConsentProvider)
+                                  ? (val) {
+                                      ref.read(locationEnabledProvider.notifier).setEnabled(val);
+                                    }
+                                  : null,
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 24),
+                        // Limpar histórico de buscas
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.history_rounded, color: primaryLight, size: 20),
+                          title: Text('Limpar Histórico de Busca', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 14)),
+                          subtitle: Text('Apagar locais recentes pesquisados', style: TextStyle(color: subtextColor, fontSize: 12)),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () {
+                            ref.read(preferencesServiceProvider).saveSearchHistory([]);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Histórico de buscas limpo com sucesso!')),
+                            );
+                          },
+                        ),
+                        const Divider(height: 12),
+                        // Limpar histórico de atividades
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.pedal_bike_rounded, color: primaryLight, size: 20),
+                          title: Text('Limpar Histórico de Atividades', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 14)),
+                          subtitle: Text('Apagar registros de pedaladas realizadas', style: TextStyle(color: subtextColor, fontSize: 12)),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () {
+                            ref.read(preferencesServiceProvider).clearActivityRecords();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Histórico de atividades limpo com sucesso!')),
+                            );
+                          },
+                        ),
+                        const Divider(height: 12),
+                        // Limpar cache de rotas
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.cloud_off_rounded, color: primaryLight, size: 20),
+                          title: Text('Limpar Cache de Rotas', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 14)),
+                          subtitle: Text('Apagar rotas offline armazenadas', style: TextStyle(color: subtextColor, fontSize: 12)),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () {
+                            ref.read(preferencesServiceProvider).saveCachedRoutes([]);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Cache de rotas offline limpo com sucesso!')),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Nota de Garantia de Privacidade
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      'Garantia de Privacidade: O Rastro nunca armazena seus dados de localização, atividades ou buscas em servidores externos. Todo o processamento ocorre estritamente no seu aparelho local.',
+                      style: TextStyle(color: subtextColor, fontSize: 11, fontStyle: FontStyle.italic, height: 1.3),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
                   // Botão editar perfil
                   SizedBox(
                     width: double.infinity,

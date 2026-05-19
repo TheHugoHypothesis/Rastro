@@ -30,6 +30,7 @@ import '../widgets/home/collapsible_panel.dart';
 import '../widgets/home/turn_by_turn_card.dart';
 import '../widgets/home/cancel_route_bar.dart';
 import '../widgets/home/poi_details_sheet.dart';
+import '../widgets/profile/profile_bottom_sheets.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -81,8 +82,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
     super.initState();
     _isDark = true;
     TtsService().init();
-    _initLocation();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkLocationConsentAndInit();
+    });
     _initCompass();
+  }
+
+  void _checkLocationConsentAndInit() {
+    final consent = ref.read(locationConsentProvider);
+    final enabled = ref.read(locationEnabledProvider);
+    if (consent) {
+      if (enabled) {
+        _initLocation();
+      }
+    } else {
+      _showLocationConsentSheetIfNeeded();
+    }
+  }
+
+  void _showLocationConsentSheetIfNeeded() {
+    showLocationConsentSheet(
+      context: context,
+      ref: ref,
+      isDark: _isDark,
+      surfaceColor: _surfaceColor,
+      textColor: _textColor,
+      subtextColor: _subtextColor,
+      borderColor: _borderColor,
+      primaryLight: _primaryLight,
+      onAccept: () {
+        _initLocation();
+      },
+    );
   }
 
   void _initCompass() {
@@ -123,6 +154,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
   }
   
   Future<void> _initLocation() async {
+    if (!ref.read(locationConsentProvider) || !ref.read(locationEnabledProvider)) {
+      return;
+    }
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -430,6 +464,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
   Color get _surfaceColor => _isDark ? AppColors.surface : AppColors.lightSurface;
   Color get _textColor => _isDark ? AppColors.textPrimary : AppColors.lightTextPrimary;
   Color get _subtextColor => _isDark ? AppColors.textSecondary : AppColors.lightTextSecondary;
+  Color get _borderColor => _isDark ? AppColors.border : AppColors.lightBorder;
+  Color get _primaryLight => _isDark ? AppColors.primaryLight : AppColors.lightPrimary;
 
   double _iconSize(double zoom) {
     if (zoom < 13.0) return 0.0;
@@ -549,6 +585,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
     if (_lastPoisCount != pois.length || _lastIsDarkCache != _isDark) {
       _updatePoiMarkersCache();
     }
+
+    ref.listen<bool>(locationEnabledProvider, (previous, next) {
+      if (next) {
+        _initLocation();
+      } else {
+        _positionStream?.cancel();
+        _positionStream = null;
+        setState(() {
+          _lastKnownPosition = null;
+        });
+      }
+    });
+
+    ref.listen<bool>(locationConsentProvider, (previous, next) {
+      if (!next) {
+        _positionStream?.cancel();
+        _positionStream = null;
+        setState(() {
+          _lastKnownPosition = null;
+        });
+      }
+    });
 
     return PopScope(
       canPop: _destinationPoint == null && !_routeAccepted,
@@ -800,6 +858,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                     LocationFab(
                       isDark: _isDark,
                       onPressed: () async {
+                        if (!ref.read(locationConsentProvider)) {
+                          _showLocationConsentSheetIfNeeded();
+                          return;
+                        }
+                        if (!ref.read(locationEnabledProvider)) {
+                          ref.read(locationEnabledProvider.notifier).setEnabled(true);
+                        }
                         if (_lastKnownPosition != null) {
                           _mapController.move(_lastKnownPosition!, 18.0);
                         } else {
