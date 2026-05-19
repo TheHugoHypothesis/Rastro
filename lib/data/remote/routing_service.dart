@@ -13,27 +13,94 @@ class RoutingService {
 
   RoutingService(this._prefsService);
 
-  /// Obtém o caminho de rota detalhado da API OSRM
+  /// Obtém o caminho de rota detalhado da API OSRM com suporte dinâmico a RF003 e RF004
   Future<({List<LatLng> points, List<RouteInstruction> instructions, double distance, double duration})> getRoutePath({
     required LatLng start,
     required LatLng end,
     required BikeType bikeType,
     required RouteStrategy strategy,
   }) async {
-    // Escolhemos o perfil apropriado. O demo público do OSRM tipicamente possui a rota "driving" ativada.
+    // 1. Determina velocidade média estimada (em m/s) por tipo de bicicleta (RF004)
+    final double speedMps;
+    switch (bikeType) {
+      case BikeType.comum:
+        speedMps = 18.0 / 3.6; // 18 km/h -> 5.0 m/s
+        break;
+      case BikeType.corrida:
+        speedMps = 25.0 / 3.6; // 25 km/h -> 6.94 m/s
+        break;
+      case BikeType.dobravel:
+        speedMps = 14.0 / 3.6; // 14 km/h -> 3.88 m/s
+        break;
+      case BikeType.eletrica:
+        speedMps = 22.0 / 3.6; // 22 km/h -> 6.11 m/s
+        break;
+    }
+
+    // 2. Determina o perfil/endpoint de roteamento ideal (RF004)
+    // Bicicleta de Corrida prioriza asfalto liso e vias estruturadas (típicas de carros)
+    final String endpoint = (bikeType == BikeType.corrida) ? 'routed-car' : 'routed-bike';
+
+    // 3. Monta a requisição solicitando rotas alternativas para comparação (RF003)
     final url = Uri.parse(
-        'https://router.project-osrm.org/route/v1/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=full&geometries=geojson&steps=true');
+        'https://routing.openstreetmap.de/$endpoint/route/v1/driving/'
+        '${start.longitude},${start.latitude};${end.longitude},${end.latitude}'
+        '?overview=full&geometries=geojson&steps=true&alternatives=true');
 
     try {
       final response = await http.get(url).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.statusCode == 200 ? response.body : '');
+        final data = jsonDecode(response.body);
         if (data != null && data['routes'] != null && (data['routes'] as List).isNotEmpty) {
-          final route = data['routes'][0];
+          final List<dynamic> routesList = data['routes'];
           
-          // 1. Extração de pontos de coordenada do GeoJSON
+          // 4. Seleção inteligente baseada no esforço e estratégia (RF003 / RF004)
+          var bestRoute = routesList[0];
+          double bestScore = double.negativeInfinity;
+
+          for (final route in routesList) {
+            final double distance = (route['distance'] as num?)?.toDouble() ?? 0.0;
+            final double duration = (route['duration'] as num?)?.toDouble() ?? 0.0;
+            
+            // Densidade de manobras por km (reflete o ritmo/fluxo constante do trajeto)
+            final legs = route['legs'] as List? ?? [];
+            int stepsCount = 0;
+            if (legs.isNotEmpty) {
+              stepsCount = (legs[0]['steps'] as List? ?? []).length;
+            }
+            final double maneuverDensity = distance > 0 ? (stepsCount / (distance / 1000.0)) : 0.0;
+
+            double score = 0.0;
+
+            if (strategy == RouteStrategy.menorEsforco) {
+              if (bikeType == BikeType.eletrica) {
+                // Bicicleta Elétrica desconsidera inclinação/esforço físico. Prioriza caminho mais rápido e direto.
+                score = -distance;
+              } else {
+                // Menor esforço prioriza ritmos constantes (menos manobras/curvas de desaceleração/aceleração)
+                // e prefere evitar percursos truncados, aceitando leves acréscimos de distância se mantiver o fluxo linear.
+                score = -(maneuverDensity * 40.0) - (distance * 0.1);
+              }
+            } else if (strategy == RouteStrategy.maiorEsforco) {
+              // Maior esforço prioriza a rota mais direta (menor distância), aceitando paradas, curvas e subidas
+              score = -distance;
+            } else if (strategy == RouteStrategy.seguranca) {
+              // Segurança prioriza menos cruzamentos e manobras complicadas
+              score = -(maneuverDensity * 30.0) - (distance * 0.5);
+            } else {
+              // Rapidez
+              score = -duration;
+            }
+
+            if (score > bestScore) {
+              bestScore = score;
+              bestRoute = route;
+            }
+          }
+
+          // 5. Extração de pontos de coordenada da rota selecionada
           final List<LatLng> points = [];
-          final geometry = route['geometry'];
+          final geometry = bestRoute['geometry'];
           if (geometry != null && geometry['coordinates'] != null) {
             final List<dynamic> coords = geometry['coordinates'];
             for (var coord in coords) {
@@ -46,9 +113,9 @@ class RoutingService {
             }
           }
 
-          // 2. Extração de instruções de manobra
+          // 6. Extração de instruções de manobra da rota selecionada
           final List<RouteInstruction> instructions = [];
-          final legs = route['legs'];
+          final legs = bestRoute['legs'];
           if (legs != null && (legs as List).isNotEmpty) {
             final steps = legs[0]['steps'];
             if (steps != null) {
@@ -58,13 +125,9 @@ class RoutingService {
             }
           }
 
-          // 3. Distância e duração física da rota
-          final double distance = (route['distance'] as num?)?.toDouble() ?? 0.0;
-          double duration = (route['duration'] as num?)?.toDouble() ?? 0.0;
-
-          // Se for bicicleta, ajustamos a estimativa de tempo (já que o OSRM padrão de carro assume velocidade maior)
-          // Média de velocidade para bicicleta de 18 km/h (5 m/s)
-          duration = distance / 5.0;
+          // 7. Ajusta a distância e calcula a duração adaptada para o ciclista
+          final double distance = (bestRoute['distance'] as num?)?.toDouble() ?? 0.0;
+          final double duration = distance / speedMps;
 
           // Salva a rota obtida no cache local
           final cachedRoute = CachedRoute(
@@ -89,7 +152,7 @@ class RoutingService {
         }
       }
     } catch (e) {
-      debugPrint('Erro de requisição na API OSRM, buscando cache local: $e');
+      debugPrint('Erro de requisição no OSRM FOSSGIS, buscando cache local: $e');
     }
 
     // Fallback inteligente: buscar do cache local se estiver offline
