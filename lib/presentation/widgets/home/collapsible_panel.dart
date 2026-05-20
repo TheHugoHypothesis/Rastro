@@ -78,7 +78,7 @@ class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
       const distanceCalc = Distance();
       for (final p in partners) {
         final dist = distanceCalc.as(LengthUnit.Meter, widget.destinationPoint!, p.point);
-        if (dist <= 1500) {
+        if (dist > 50 && dist <= 1500) {
           if (nearPartner == null || dist < partnerDistance!) {
             nearPartner = p;
             partnerDistance = dist;
@@ -959,12 +959,13 @@ class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
           // Button
           SizedBox(
             width: double.infinity,
-            height: 40,
+            height: 48,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: isAdded ? Colors.green : (widget.isDark ? AppColors.primary : AppColors.lightPrimary),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 0,
               ),
@@ -979,12 +980,12 @@ class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
               icon: Icon(
                 isAdded ? Icons.check_rounded : Icons.add_location_alt_rounded,
                 color: Colors.white,
-                size: 16,
+                size: 18,
               ),
               label: Text(
                 isAdded ? 'Parada Adicionada' : 'Adicionar Parada',
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                 ),
