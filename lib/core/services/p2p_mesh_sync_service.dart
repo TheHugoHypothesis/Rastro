@@ -29,8 +29,26 @@ class P2PMeshSyncService {
     startSyncProcess();
   }
 
+  Future<void> stopSyncProcess() async {
+    try {
+      await Nearby().stopAdvertising();
+      await Nearby().stopDiscovery();
+      await Nearby().stopAllEndpoints();
+      _connectedPeers.clear();
+      _syncEventController.add('Rede P2P offline: compartilhamento desativado.');
+    } catch (e) {
+      // Ignora falhas na parada
+    }
+  }
+
   Future<void> startSyncProcess() async {
     if (!_isInitialized) return;
+    
+    final isP2PEnabled = _ref.read(p2pEnabledProvider);
+    if (!isP2PEnabled) {
+      stopSyncProcess();
+      return;
+    }
     
     final granted = await requestPermissions();
     if (!granted) {

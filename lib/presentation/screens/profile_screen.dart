@@ -302,6 +302,45 @@ class ProfileScreen extends ConsumerWidget {
                           ],
                         ),
                         const Divider(height: 24),
+                        // Switch do P2P
+                        Row(
+                          children: [
+                            Icon(Icons.wifi_tethering_rounded, color: primaryLight, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Rede Mesh Peer-to-Peer', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 14)),
+                                  const SizedBox(height: 2),
+                                  Text('Trocar avaliações com ciclistas próximos', style: TextStyle(color: subtextColor, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: ref.watch(p2pEnabledProvider),
+                              activeTrackColor: primaryLight,
+                              onChanged: (val) {
+                                ref.read(p2pEnabledProvider.notifier).setEnabled(val);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(val ? 'Pesquisa P2P ativada.' : 'Pesquisa P2P desativada. Rede Offline.'),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        // Explicação de funcionamento
+                        Padding(
+                          padding: const EdgeInsets.only(left: 32, top: 6, bottom: 4),
+                          child: Text(
+                            'Quando ativado, o Rastro busca e sincroniza automaticamente avaliações de segurança de vias com outros ciclistas próximos de forma 100% offline via Wi-Fi Direct e Bluetooth. Suas chaves criptográficas garantem a autenticidade sem expor sua identidade.',
+                            style: TextStyle(color: subtextColor.withValues(alpha: 0.8), fontSize: 11, height: 1.35),
+                          ),
+                        ),
+                        const Divider(height: 24),
                         // Limpar histórico de buscas
                         ListTile(
                           contentPadding: EdgeInsets.zero,

@@ -163,6 +163,28 @@ class LocationEnabledNotifier extends Notifier<bool> {
 
 final locationEnabledProvider = NotifierProvider<LocationEnabledNotifier, bool>(LocationEnabledNotifier.new);
 
+class P2PEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final prefs = ref.watch(preferencesServiceProvider);
+    return prefs.prefs.getBool('p2p_enabled_pref') ?? true;
+  }
+
+  void setEnabled(bool enabled) {
+    final prefs = ref.read(preferencesServiceProvider);
+    prefs.prefs.setBool('p2p_enabled_pref', enabled);
+    state = enabled;
+
+    if (enabled) {
+      P2PMeshSyncService().startSyncProcess();
+    } else {
+      P2PMeshSyncService().stopSyncProcess();
+    }
+  }
+}
+
+final p2pEnabledProvider = NotifierProvider<P2PEnabledNotifier, bool>(P2PEnabledNotifier.new);
+
 class FrequentAddressesNotifier extends Notifier<List<Map<String, dynamic>>> {
   @override
   List<Map<String, dynamic>> build() {
