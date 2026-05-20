@@ -49,6 +49,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
   int _currentStepIndex = 0;
   bool _routeAccepted = false;
   LatLng? _destinationPoint;
+  LatLng? _sponsoredWaypoint;
   LatLng? _originPoint;
   List<LatLng> _routePoints = [];
   List<LatLng> _previewRoutePoints = [];
@@ -361,6 +362,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
       }
       setState(() { 
         _destinationPoint = dest; 
+        _sponsoredWaypoint = null;
         _currentSteps.clear(); 
         _currentStepIndex = 0; 
         _routeAccepted = false; 
@@ -389,6 +391,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
       final routeData = await ref.read(routingServiceProvider).getRoutePath(
         start: startLatLng,
         end: endLatLng,
+        waypoint: _sponsoredWaypoint,
         bikeType: selectedBike,
         strategy: selectedStrategy,
       );
@@ -421,7 +424,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
     
     try {
       final routeData = await ref.read(routingServiceProvider).getRoutePath(
-        start: startLatLng, end: _destinationPoint!, bikeType: selectedBike, strategy: selectedStrategy,
+        start: startLatLng,
+        end: _destinationPoint!,
+        waypoint: _sponsoredWaypoint,
+        bikeType: selectedBike,
+        strategy: selectedStrategy,
       );
       
       if (routeData.points.isNotEmpty) {
@@ -868,6 +875,61 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                     );
                   }),
 
+                  // Marcadores de Estabelecimentos Parceiros Patrocinados (RF009)
+                  ...ref.watch(partnerEstablishmentsProvider).map((partner) {
+                    return Marker(
+                      point: partner.point,
+                      width: 54,
+                      height: 54,
+                      alignment: Alignment.center,
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticService().selectionClick();
+                          showPartnerDetailsSheet(
+                            context: context,
+                            partner: partner,
+                            isDark: _isDark,
+                            surfaceColor: _surfaceColor,
+                            textColor: _textColor,
+                            accentColor: _primaryColor,
+                            onAddressSelected: _onAddressSelected,
+                          );
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: _isDark 
+                                ? [Colors.greenAccent.withValues(alpha: 0.95), AppColors.primaryLight.withValues(alpha: 0.95)] 
+                                : [Colors.green, AppColors.primary],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 2.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.green.withValues(alpha: _isDark ? 0.6 : 0.4),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                              )
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          child: const Icon(
+                            Icons.pedal_bike_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+
                   // Destination Marker (Continua aparecendo com visual elegante durante todo o percurso)
                   if (_destinationPoint != null)
                     Marker(
@@ -1037,7 +1099,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                 totalSteps: _currentSteps.length,
                 onSpeak: () => TtsService().speak('${_currentSteps[_currentStepIndex].instruction} em ${_currentSteps[_currentStepIndex].distance.toStringAsFixed(0)} metros'),
                 onClose: () async {
-                  setState(() { _routeAccepted = false; _currentSteps.clear(); _routePoints.clear(); });
+                  setState(() { 
+                    _routeAccepted = false; 
+                    _currentSteps.clear(); 
+                    _routePoints.clear(); 
+                    _sponsoredWaypoint = null;
+                  });
                   ref.read(notificationServiceProvider).cancelAll();
                 },
                 isTtsEnabled: isTtsEnabled,
@@ -1129,6 +1196,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                     _routeAccepted = false; 
                     _currentSteps.clear(); 
                     _destinationPoint = null; 
+                    _sponsoredWaypoint = null;
                     _originPoint = null;
                     _routePoints.clear(); 
                     _panelExpanded = false;
@@ -1151,6 +1219,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                 textColor: _textColor,
                 subtextColor: _subtextColor,
                 destinationPoint: _destinationPoint,
+                sponsoredWaypoint: _sponsoredWaypoint,
+                onSponsoredWaypointChanged: (waypoint) {
+                  setState(() {
+                    _sponsoredWaypoint = waypoint;
+                  });
+                  _updateRoutePreview();
+                },
                 onTraceRoute: _tracarRotaSelecionada,
                 isExpanded: _panelExpanded,
                 onExpansionChanged: (expanded) {

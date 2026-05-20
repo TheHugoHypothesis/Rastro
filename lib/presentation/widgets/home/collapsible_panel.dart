@@ -5,6 +5,7 @@ import '../../../core/theme/colors.dart';
 import '../../../domain/models/bike_type.dart';
 import '../../../domain/models/route_preference.dart';
 import '../../../domain/models/safety_evaluation.dart';
+import '../../../domain/models/partner_establishment.dart';
 import '../../providers/app_state_provider.dart';
 import '../../../core/services/haptic_service.dart';
 
@@ -15,6 +16,8 @@ class CollapsiblePanel extends ConsumerStatefulWidget {
   final Color textColor;
   final Color subtextColor;
   final LatLng? destinationPoint;
+  final LatLng? sponsoredWaypoint;
+  final ValueChanged<LatLng?> onSponsoredWaypointChanged;
   final Future<void> Function() onTraceRoute;
   final bool isExpanded;
   final ValueChanged<bool> onExpansionChanged;
@@ -31,6 +34,8 @@ class CollapsiblePanel extends ConsumerStatefulWidget {
     required this.textColor,
     required this.subtextColor,
     required this.destinationPoint,
+    required this.sponsoredWaypoint,
+    required this.onSponsoredWaypointChanged,
     required this.onTraceRoute,
     required this.isExpanded,
     required this.onExpansionChanged,
@@ -65,8 +70,24 @@ class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
     final selectedBike = ref.watch(bikeTypeProvider);
     final selectedStrategy = ref.watch(routeStrategyProvider);
     final safetyEvaluations = ref.watch(safetyEvaluationsProvider);
+    final partners = ref.watch(partnerEstablishmentsProvider);
+    PartnerEstablishment? nearPartner;
+    double? partnerDistance;
+
+    if (widget.destinationPoint != null && partners.isNotEmpty) {
+      const distanceCalc = Distance();
+      for (final p in partners) {
+        final dist = distanceCalc.as(LengthUnit.Meter, widget.destinationPoint!, p.point);
+        if (dist <= 1500) {
+          if (nearPartner == null || dist < partnerDistance!) {
+            nearPartner = p;
+            partnerDistance = dist;
+          }
+        }
+      }
+    }
+
     final routePoints = widget.routePoints;
-    
     double avgSafety = 0.0;
     int matchedCount = 0;
     bool hasLowSafety = false;
@@ -443,6 +464,10 @@ class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
                     const SizedBox(height: 14),
 
                     if (widget.previewDistance > 0 && widget.routePoints != null && widget.routePoints!.isNotEmpty) ...[
+                      if (nearPartner != null) ...[
+                        _buildSponsoredStopCard(nearPartner, partnerDistance!),
+                        const SizedBox(height: 12),
+                      ],
                       _buildRouteReputationCard(),
                       const SizedBox(height: 12),
                     ],
@@ -795,6 +820,177 @@ class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
           Text(label, style: TextStyle(color: widget.subtextColor, fontSize: 9, fontWeight: FontWeight.w700)),
           const SizedBox(height: 2),
           Text(value, style: TextStyle(color: valueColor, fontSize: 13, fontWeight: FontWeight.w900)),
+        ],
+      ),
+    );
+  }
+  Widget _buildSponsoredStopCard(PartnerEstablishment partner, double dist) {
+    final isAdded = widget.sponsoredWaypoint != null &&
+        widget.sponsoredWaypoint!.latitude == partner.point.latitude &&
+        widget.sponsoredWaypoint!.longitude == partner.point.longitude;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: widget.isDark ? AppColors.cardDark : Colors.grey[50],
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isAdded 
+            ? Colors.green 
+            : (widget.isDark ? AppColors.border : AppColors.lightBorder),
+          width: isAdded ? 1.5 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: widget.isDark ? 0.2 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.star_rounded, color: Colors.green, size: 14),
+                    SizedBox(width: 4),
+                    Text(
+                      'Recomendado',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Text(
+                'A ${dist.toStringAsFixed(0)}m do destino',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: widget.subtextColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: widget.isDark 
+                      ? [Colors.greenAccent, AppColors.primaryLight] 
+                      : [Colors.green, widget.primaryColor],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.pedal_bike_rounded, color: Colors.white, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      partner.name,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: widget.textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Estabelecimento bike-friendly com infraestrutura de apoio!',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: widget.subtextColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Amenities row
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: partner.amenities.take(3).map((amenity) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: widget.isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  amenity,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: widget.textColor.withValues(alpha: 0.8),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 14),
+          // Button
+          SizedBox(
+            width: double.infinity,
+            height: 40,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isAdded ? Colors.green : (widget.isDark ? AppColors.primary : AppColors.lightPrimary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              onPressed: () {
+                HapticService().selectionClick();
+                if (isAdded) {
+                  widget.onSponsoredWaypointChanged(null);
+                } else {
+                  widget.onSponsoredWaypointChanged(partner.point);
+                }
+              },
+              icon: Icon(
+                isAdded ? Icons.check_rounded : Icons.add_location_alt_rounded,
+                color: Colors.white,
+                size: 16,
+              ),
+              label: Text(
+                isAdded ? 'Parada Adicionada' : 'Adicionar Parada',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

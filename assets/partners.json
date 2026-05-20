@@ -1,0 +1,41 @@
+[
+  {
+    "id": "partner_1",
+    "name": "Bike Café Paulista",
+    "latitude": -23.5615,
+    "longitude": -46.6560,
+    "amenities": [
+      "Bicicletário Seguro",
+      "Bomba de Ar",
+      "Ponto de Água",
+      "Desconto p/ Ciclistas"
+    ],
+    "adminSignature": "admin_sig_paulista_cafe_998877"
+  },
+  {
+    "id": "partner_2",
+    "name": "Oficina Rápida Consolação",
+    "latitude": -23.5530,
+    "longitude": -46.6590,
+    "amenities": [
+      "Ferramentas Gratuitas",
+      "Remendos de Pneu",
+      "Tomada p/ E-Bike",
+      "Suporte Mecânico"
+    ],
+    "adminSignature": "admin_sig_consolacao_repairs_554433"
+  },
+  {
+    "id": "partner_3",
+    "name": "Vila Madalena Bike Point",
+    "latitude": -23.5450,
+    "longitude": -46.6850,
+    "amenities": [
+      "Vestiário de Ciclistas",
+      "Carregador de Bateria",
+      "Ducha Rápida",
+      "Café Cortesia"
+    ],
+    "adminSignature": "admin_sig_madalena_point_112233"
+  }
+]

@@ -20,6 +20,7 @@ class RoutingService {
   Future<({List<LatLng> points, List<RouteInstruction> instructions, double distance, double duration})> getRoutePath({
     required LatLng start,
     required LatLng end,
+    LatLng? waypoint,
     required BikeType bikeType,
     required RouteStrategy strategy,
   }) async {
@@ -44,10 +45,14 @@ class RoutingService {
     // Bicicleta de Corrida prioriza asfalto liso e vias estruturadas (típicas de carros)
     final String endpoint = (bikeType == BikeType.corrida) ? 'routed-car' : 'routed-bike';
 
-    // 3. Monta a requisição solicitando rotas alternativas para comparação (RF003)
+    // 3. Monta a requisição com ou sem waypoint
+    final String coords = waypoint != null
+        ? '${start.longitude},${start.latitude};${waypoint.longitude},${waypoint.latitude};${end.longitude},${end.latitude}'
+        : '${start.longitude},${start.latitude};${end.longitude},${end.latitude}';
+
     final url = Uri.parse(
         'https://routing.openstreetmap.de/$endpoint/route/v1/driving/'
-        '${start.longitude},${start.latitude};${end.longitude},${end.latitude}'
+        '$coords'
         '?overview=full&geometries=geojson&steps=true&alternatives=true');
 
     try {

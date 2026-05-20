@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../core/theme/colors.dart';
 import '../../../data/remote/poi_service.dart';
 import '../../../domain/models/safety_evaluation.dart';
+import '../../../domain/models/partner_establishment.dart';
 import '../../../core/services/crypto_identity_service.dart';
 import '../../providers/app_state_provider.dart';
 import '../../../core/services/haptic_service.dart';
@@ -542,6 +543,199 @@ void showCoordinateDetailsSheet({
     builder: (ctx) => CoordinateDetailsSheet(
       point: point,
       addressFuture: addressFuture,
+      isDark: isDark,
+      surfaceColor: surfaceColor,
+      textColor: textColor,
+      accentColor: accentColor,
+      onAddressSelected: onAddressSelected,
+    ),
+  );
+}
+
+class PartnerDetailsSheet extends StatelessWidget {
+  final PartnerEstablishment partner;
+  final bool isDark;
+  final Color surfaceColor;
+  final Color textColor;
+  final Color accentColor;
+  final Function(LatLng, {String? title, String? subtitle}) onAddressSelected;
+
+  const PartnerDetailsSheet({
+    super.key,
+    required this.partner,
+    required this.isDark,
+    required this.surfaceColor,
+    required this.textColor,
+    required this.accentColor,
+    required this.onAddressSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20, 8, 20, MediaQuery.of(context).padding.bottom + 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Drag handle
+          Align(
+            alignment: Alignment.center,
+            child: Container(
+              width: 40, height: 4, margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.border : AppColors.lightBorder, 
+                borderRadius: BorderRadius.circular(2)
+              )
+            ),
+          ),
+          // Cabeçalho com ícone premium + nome/badges
+          Row(
+            children: [
+              Container(
+                width: 56, height: 56,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isDark ? [Colors.greenAccent, AppColors.primaryLight] : [Colors.green, AppColors.primary],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: Colors.green.withValues(alpha: 0.3), blurRadius: 10)
+                  ],
+                ),
+                child: const Icon(Icons.pedal_bike_rounded, color: Colors.white, size: 28),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.green, width: 1),
+                          ),
+                          child: const Text(
+                            'Bike-Friendly',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.green),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: accentColor.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: accentColor, width: 1),
+                          ),
+                          child: const Text(
+                            'Parceiro Rastro',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.primaryLight),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      partner.name,
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: textColor),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Comodidades / Facilidades (Amenities)
+          Text(
+            'Facilidades para Ciclistas:',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: isDark ? Colors.white70 : Colors.black54),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: partner.amenities.map((amenity) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.cardDark : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: isDark ? AppColors.border : AppColors.lightBorder),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      amenity,
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: textColor),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 24),
+
+          // Botão Traçar Rota
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: isDark ? AppColors.purpleGradient : null,
+                color: isDark ? null : AppColors.lightPrimary,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: isDark
+                    ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 14)]
+                    : [],
+              ),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  onAddressSelected(partner.point, title: partner.name, subtitle: 'Estabelecimento Parceiro');
+                },
+                icon: const Icon(Icons.directions_bike_rounded, color: Colors.white),
+                label: const Text('Traçar Rota até aqui',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+void showPartnerDetailsSheet({
+  required BuildContext context,
+  required PartnerEstablishment partner,
+  required bool isDark,
+  required Color surfaceColor,
+  required Color textColor,
+  required Color accentColor,
+  required Function(LatLng, {String? title, String? subtitle}) onAddressSelected,
+}) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: surfaceColor,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    builder: (ctx) => PartnerDetailsSheet(
+      partner: partner,
       isDark: isDark,
       surfaceColor: surfaceColor,
       textColor: textColor,

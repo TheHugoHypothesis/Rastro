@@ -8,6 +8,7 @@ import '../../domain/models/user_profile.dart';
 import '../../domain/models/activity_record.dart';
 import '../../domain/models/cached_route.dart';
 import '../../domain/models/safety_evaluation.dart';
+import '../../domain/models/partner_establishment.dart';
 import '../remote/poi_service.dart';
 
 class PreferencesService {
@@ -329,5 +330,54 @@ class PreferencesService {
     final evaluations = loadSafetyEvaluations();
     evaluations.add(evaluation);
     saveSafetyEvaluations(evaluations);
+  }
+
+  static const String keyPartnerEstablishments = 'partner_establishments_pref';
+
+  void savePartnerEstablishments(List<PartnerEstablishment> establishments) {
+    final jsonList = establishments.map((e) => e.toJson()).toList();
+    prefs.setString(keyPartnerEstablishments, jsonEncode(jsonList));
+  }
+
+  List<PartnerEstablishment> loadPartnerEstablishments() {
+    final jsonString = prefs.getString(keyPartnerEstablishments);
+    if (jsonString != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(jsonString);
+        return decoded.map((e) => PartnerEstablishment.fromJson(e as Map<String, dynamic>)).toList();
+      } catch (e) {
+        return [];
+      }
+    }
+    // Dados iniciais mockados de estabelecimentos parceiros
+    final mockPartners = [
+      PartnerEstablishment(
+        id: 'partner_1',
+        name: 'Bike Café Paulista & Shop',
+        latitude: -23.559520,
+        longitude: -46.658308,
+        isBikeFriendly: true,
+        amenities: ['Bicicletário Seguro', 'Bomba de ar', 'Água Grátis', 'Tomada para E-Bike'],
+        adminSignature: 'admin_sig_mock_1',
+      ),
+      PartnerEstablishment(
+        id: 'partner_2',
+        name: 'Oficina Rápida Consolação',
+        latitude: -23.552520,
+        longitude: -46.660308,
+        isBikeFriendly: true,
+        amenities: ['Ferramentas gratuitas', 'Remendo de Pneu', 'Venda de Acessórios'],
+        adminSignature: 'admin_sig_mock_2',
+      ),
+    ];
+    savePartnerEstablishments(mockPartners);
+    return mockPartners;
+  }
+
+  void addPartnerEstablishment(PartnerEstablishment establishment) {
+    final list = loadPartnerEstablishments();
+    list.removeWhere((e) => e.id == establishment.id);
+    list.add(establishment);
+    savePartnerEstablishments(list);
   }
 }

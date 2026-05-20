@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/safety_evaluation.dart';
+import '../../domain/models/partner_establishment.dart';
 import '../../data/local/preferences_service.dart';
 import '../../presentation/providers/app_state_provider.dart';
 import 'crypto_identity_service.dart';
@@ -128,8 +129,13 @@ class P2PMeshSyncService {
   }
 
   Future<void> _sendLocalEvaluations(String endpointId) async {
-    final local = _prefsService.loadSafetyEvaluations();
-    final jsonStr = jsonEncode(local.map((e) => e.toJson()).toList());
+    final localEvals = _prefsService.loadSafetyEvaluations();
+    final localPartners = _prefsService.loadPartnerEstablishments();
+    final payloadMap = {
+      'evaluations': localEvals.map((e) => e.toJson()).toList(),
+      'partners': localPartners.map((p) => p.toJson()).toList(),
+    };
+    final jsonStr = jsonEncode(payloadMap);
     final bytes = utf8.encode(jsonStr);
     
     await Nearby().sendBytesPayload(endpointId, bytes);
@@ -140,48 +146,102 @@ class P2PMeshSyncService {
 
     try {
       final jsonStr = utf8.decode(payload.bytes!);
-      final List<dynamic> decoded = jsonDecode(jsonStr);
-      final receivedEvaluations = decoded.map((e) => SafetyEvaluation.fromJson(e as Map<String, dynamic>)).toList();
-
-      final crypto = CryptoIdentityService();
-      final local = _prefsService.loadSafetyEvaluations();
+      final decodedMap = jsonDecode(jsonStr) as Map<String, dynamic>;
+      
       final peerName = _connectedPeers[endpointId] ?? 'Ciclista';
-      int addedCount = 0;
+      final crypto = CryptoIdentityService();
 
-      for (final eval in receivedEvaluations) {
-        final exists = local.any((e) => 
-          e.segmentId == eval.segmentId && 
-          e.creatorPublicKey == eval.creatorPublicKey && 
-          e.timestamp == eval.timestamp
-        );
-        if (exists) continue;
+      // 1. Processa as Avaliações de Segurança
+      if (decodedMap.containsKey('evaluations')) {
+        final List<dynamic> decodedEvals = decodedMap['evaluations'] as List;
+        final receivedEvaluations = decodedEvals.map((e) => SafetyEvaluation.fromJson(e as Map<String, dynamic>)).toList();
+        final localEvals = _prefsService.loadSafetyEvaluations();
+        int addedEvalsCount = 0;
 
-        // 1. Verificação Criptográfica da Assinatura
-        final rawMsg = '${eval.segmentId}_${eval.latitude}_${eval.longitude}_${eval.safetyScore}_${eval.timestamp}';
-        final isValid = crypto.verify(rawMsg, eval.signature, eval.creatorPublicKey);
-        if (!isValid) continue;
+        for (final eval in receivedEvaluations) {
+          final exists = localEvals.any((e) => 
+            e.segmentId == eval.segmentId && 
+            e.creatorPublicKey == eval.creatorPublicKey && 
+            e.timestamp == eval.timestamp
+          );
+          if (exists) continue;
 
-        // 2. Prevenção Sybil: Limite de 3 votos por hora por chave pública
-        final hourWindow = 3600000;
-        final countInHour = receivedEvaluations.where((e) =>
-          e.creatorPublicKey == eval.creatorPublicKey &&
-          (e.timestamp - eval.timestamp).abs() < hourWindow
-        ).length;
+          final rawMsg = '${eval.segmentId}_${eval.latitude}_${eval.longitude}_${eval.safetyScore}_${eval.timestamp}';
+          final isValid = crypto.verify(rawMsg, eval.signature, eval.creatorPublicKey);
+          if (!isValid) continue;
 
-        if (countInHour > 3) continue;
+          final hourWindow = 3600000;
+          final countInHour = receivedEvaluations.where((e) =>
+            e.creatorPublicKey == eval.creatorPublicKey &&
+            (e.timestamp - eval.timestamp).abs() < hourWindow
+          ).length;
+          if (countInHour > 3) continue;
 
-        // 3. Mescla na base local e atualiza o estado Riverpod em tempo real
-        _ref.read(safetyEvaluationsProvider.notifier).addEvaluation(eval);
-        addedCount++;
+          _ref.read(safetyEvaluationsProvider.notifier).addEvaluation(eval);
+          addedEvalsCount++;
+        }
+
+        if (addedEvalsCount > 0) {
+          _syncEventController.add('Sucesso P2P: Sincronizadas $addedEvalsCount avaliações com ciclista $peerName!');
+        }
       }
 
-      if (addedCount > 0) {
-        _syncEventController.add('Sucesso P2P: Sincronizadas $addedCount avaliações com ciclista $peerName via WiFi Direct!');
-      } else {
-        _syncEventController.add('P2P: Banco de rotas seguras com $peerName atualizado.');
+      // 2. Processa os Parceiros Patrocinados
+      if (decodedMap.containsKey('partners')) {
+        final List<dynamic> decodedPartners = decodedMap['partners'] as List;
+        final receivedPartners = decodedPartners.map((e) => PartnerEstablishment.fromJson(e as Map<String, dynamic>)).toList();
+        final localPartners = _prefsService.loadPartnerEstablishments();
+        int addedPartnersCount = 0;
+
+        for (final partner in receivedPartners) {
+          final exists = localPartners.any((p) => p.id == partner.id);
+          if (exists) continue;
+
+          final isValid = crypto.verifyPartnerSignature(partner.id, partner.adminSignature);
+          if (!isValid) continue;
+
+          _ref.read(partnerEstablishmentsProvider.notifier).addPartner(partner);
+          addedPartnersCount++;
+        }
+
+        if (addedPartnersCount > 0) {
+          _syncEventController.add('Sucesso P2P: Sincronizados $addedPartnersCount parceiros bike-friendly com ciclista $peerName!');
+        }
       }
+
     } catch (e) {
-      _syncEventController.add('Erro na recepção dos dados P2P.');
+      // Fallback para o payload antigo (array de avaliações direto)
+      try {
+        final jsonStr = utf8.decode(payload.bytes!);
+        final List<dynamic> decoded = jsonDecode(jsonStr);
+        final receivedEvaluations = decoded.map((e) => SafetyEvaluation.fromJson(e as Map<String, dynamic>)).toList();
+        final local = _prefsService.loadSafetyEvaluations();
+        final crypto = CryptoIdentityService();
+        final peerName = _connectedPeers[endpointId] ?? 'Ciclista';
+        int addedCount = 0;
+
+        for (final eval in receivedEvaluations) {
+          final exists = local.any((e) => 
+            e.segmentId == eval.segmentId && 
+            e.creatorPublicKey == eval.creatorPublicKey && 
+            e.timestamp == eval.timestamp
+          );
+          if (exists) continue;
+
+          final rawMsg = '${eval.segmentId}_${eval.latitude}_${eval.longitude}_${eval.safetyScore}_${eval.timestamp}';
+          final isValid = crypto.verify(rawMsg, eval.signature, eval.creatorPublicKey);
+          if (!isValid) continue;
+
+          _ref.read(safetyEvaluationsProvider.notifier).addEvaluation(eval);
+          addedCount++;
+        }
+
+        if (addedCount > 0) {
+          _syncEventController.add('Sucesso P2P: Sincronizadas $addedCount avaliações com ciclista $peerName!');
+        }
+      } catch (err) {
+        _syncEventController.add('Erro na recepção dos dados P2P.');
+      }
     }
   }
 

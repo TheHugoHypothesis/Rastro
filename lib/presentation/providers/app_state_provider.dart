@@ -5,7 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/bike_type.dart';
 import '../../domain/models/route_preference.dart';
 import '../../domain/models/safety_evaluation.dart';
+import '../../domain/models/partner_establishment.dart';
 import '../../core/services/p2p_mesh_sync_service.dart';
+import '../../core/services/partner_sync_service.dart';
 import '../../data/local/preferences_service.dart';
 import '../../data/remote/routing_service.dart';
 import '../../core/services/tts_service.dart';
@@ -290,3 +292,31 @@ final p2pMeshEventsProvider = StreamProvider<String>((ref) {
   
   return syncService.syncEvents;
 });
+
+class PartnerEstablishmentsNotifier extends Notifier<List<PartnerEstablishment>> {
+  @override
+  List<PartnerEstablishment> build() {
+    final prefs = ref.watch(preferencesServiceProvider);
+    _syncWithCloud();
+    return prefs.loadPartnerEstablishments();
+  }
+
+  Future<void> _syncWithCloud() async {
+    final cloudPartners = await PartnerSyncService().fetchOfficialPartners();
+    if (cloudPartners.isNotEmpty) {
+      final prefs = ref.read(preferencesServiceProvider);
+      for (final p in cloudPartners) {
+        prefs.addPartnerEstablishment(p);
+      }
+      state = prefs.loadPartnerEstablishments();
+    }
+  }
+
+  void addPartner(PartnerEstablishment partner) {
+    final prefs = ref.read(preferencesServiceProvider);
+    prefs.addPartnerEstablishment(partner);
+    state = prefs.loadPartnerEstablishments();
+  }
+}
+
+final partnerEstablishmentsProvider = NotifierProvider<PartnerEstablishmentsNotifier, List<PartnerEstablishment>>(PartnerEstablishmentsNotifier.new);
