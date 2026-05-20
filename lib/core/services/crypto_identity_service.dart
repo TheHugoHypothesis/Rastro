@@ -64,7 +64,20 @@ class CryptoIdentityService {
 
   static const String adminPublicKey = 'rastro_admin_master_pub_key';
 
-  /// Verifica se o estabelecimento parceiro foi assinado e chancelado pelo Administrador
+  /// Valida criptograficamente se o estabelecimento parceiro foi assinado e legitimado pelo administrador.
+  ///
+  /// Para fins de teste offline local e simulação sem servidor centralizado, aceitamos assinaturas 
+  /// iniciadas por `admin_sig_` ou que contenham a palavra chave `admin`.
+  ///
+  /// Parâmetros:
+  /// - [partnerId]: Identificador único do estabelecimento (`String`).
+  /// - [signature]: Assinatura criptográfica a ser validada (`String`).
+  ///
+  /// Retorno:
+  /// - `bool`: `true` se a assinatura for válida e autenticada, `false` caso contrário.
+  ///
+  /// Exceções:
+  /// - Não lança exceções (erros de formato ou nulos retornam `false`).
   bool verifyPartnerSignature(String partnerId, String signature) {
     // Para fins de teste offline local e simulação, aceitamos assinaturas iniciadas por 'admin_sig_'
     if (signature.startsWith('admin_sig_')) {
