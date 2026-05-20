@@ -51,6 +51,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
   LatLng? _destinationPoint;
   LatLng? _originPoint;
   List<LatLng> _routePoints = [];
+  List<LatLng> _previewRoutePoints = [];
+  List<String> _previewRouteStreetNames = [];
   double _previewDistance = 0.0;
   double _previewDuration = 0.0;
   DateTime? _lastLocationTime;
@@ -363,6 +365,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
         _currentStepIndex = 0; 
         _routeAccepted = false; 
         _routePoints.clear();
+        _previewRoutePoints.clear();
+        _previewRouteStreetNames.clear();
         _previewDistance = 0.0;
         _previewDuration = 0.0;
       });
@@ -395,6 +399,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
         setState(() {
           _previewDistance = routeData.distance;
           _previewDuration = routeData.duration;
+          _previewRoutePoints = routeData.points;
+          _previewRouteStreetNames = routeData.instructions.map((step) => step.name).where((name) => name.isNotEmpty).toList();
         });
       }
     } catch (e) {
@@ -624,6 +630,58 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
       }
     });
 
+    ref.listen<AsyncValue<String>>(p2pMeshEventsProvider, (previous, next) {
+      next.whenData((msg) {
+        final isError = msg.toLowerCase().contains('erro') || 
+                        msg.toLowerCase().contains('recusad') || 
+                        msg.toLowerCase().contains('ative');
+        final isSuccess = msg.toLowerCase().contains('sucesso') || 
+                          msg.toLowerCase().contains('sincroniz') || 
+                          msg.toLowerCase().contains('atualizado');
+        
+        final IconData iconData = isError 
+            ? Icons.warning_amber_rounded 
+            : (isSuccess ? Icons.verified_user_rounded : Icons.sensors_rounded);
+            
+        final Color iconColor = isError 
+            ? Colors.redAccent 
+            : (isSuccess 
+                ? (_isDark ? Colors.greenAccent : Colors.green) 
+                : (_isDark ? AppColors.primaryLight : AppColors.lightPrimary));
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(iconData, color: iconColor, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    msg,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: _isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: _isDark ? AppColors.cardDark : Colors.white,
+            duration: const Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: _isDark ? AppColors.border : AppColors.lightBorder,
+                width: 1,
+              ),
+            ),
+          ),
+        );
+      });
+    });
+
     return PopScope(
       canPop: _destinationPoint == null && !_routeAccepted,
       onPopInvokedWithResult: (didPop, result) {
@@ -650,6 +708,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
               initialZoom: 18.0,
               minZoom: 5.0,
               maxZoom: 19.0,
+              backgroundColor: _bgColor,
               cameraConstraint: SafeCameraConstraint(
                 CameraConstraint.contain(
                   bounds: LatLngBounds(
@@ -681,12 +740,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
             children: [
               TileLayer(
                 urlTemplate: _isDark 
-                    ? "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
-                    : "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+                    ? "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    : "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
                 userAgentPackageName: 'com.rastro.app',
+                retinaMode: RetinaMode.isHighDensity(context),
+                maxNativeZoom: 18,
                 keepBuffer: 3,
-                panBuffer: 2,
-                tileDisplay: const TileDisplay.instantaneous(),
+                panBuffer: 1,
+                tileDisplay: const TileDisplay.fadeIn(
+                  duration: Duration(milliseconds: 150),
+                ),
+                tileUpdateTransformer: TileUpdateTransformers.debounce(
+                  const Duration(milliseconds: 80),
+                ),
               ),
               
               if (_routePoints.isNotEmpty)
@@ -1094,6 +1160,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                 },
                 previewDistance: _previewDistance,
                 previewDuration: _previewDuration,
+                routePoints: _routePoints.isNotEmpty ? _routePoints : _previewRoutePoints,
+                routeStreetNames: _routePoints.isNotEmpty 
+                    ? _currentSteps.map((step) => step.name).where((name) => name.isNotEmpty).toList()
+                    : _previewRouteStreetNames,
               ),
             ),
 

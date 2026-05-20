@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/bike_type.dart';
 import '../../domain/models/route_preference.dart';
+import '../../domain/models/safety_evaluation.dart';
+import '../../core/services/p2p_mesh_sync_service.dart';
 import '../../data/local/preferences_service.dart';
 import '../../data/remote/routing_service.dart';
 import '../../core/services/tts_service.dart';
@@ -231,3 +233,38 @@ class HapticEnabledNotifier extends Notifier<bool> {
 }
 
 final hapticEnabledProvider = NotifierProvider<HapticEnabledNotifier, bool>(HapticEnabledNotifier.new);
+
+class SafetyEvaluationsNotifier extends Notifier<List<SafetyEvaluation>> {
+  @override
+  List<SafetyEvaluation> build() {
+    final prefs = ref.watch(preferencesServiceProvider);
+    return prefs.loadSafetyEvaluations();
+  }
+
+  void addEvaluation(SafetyEvaluation evaluation) {
+    final prefs = ref.read(preferencesServiceProvider);
+    prefs.addSafetyEvaluation(evaluation);
+    state = [...state, evaluation];
+  }
+
+  void removeEvaluation(String segmentId, String creatorPublicKey) {
+    final prefs = ref.read(preferencesServiceProvider);
+    final current = List<SafetyEvaluation>.from(state);
+    current.removeWhere((e) => e.segmentId == segmentId && e.creatorPublicKey == creatorPublicKey);
+    prefs.saveSafetyEvaluations(current);
+    state = current;
+  }
+}
+
+final safetyEvaluationsProvider = NotifierProvider<SafetyEvaluationsNotifier, List<SafetyEvaluation>>(SafetyEvaluationsNotifier.new);
+
+// Provedor para expor o stream de eventos P2P
+final p2pMeshEventsProvider = StreamProvider<String>((ref) {
+  final prefs = ref.watch(preferencesServiceProvider);
+  final syncService = P2PMeshSyncService();
+  
+  // Inicializa o serviço com o preferencesServiceProvider caso ainda não inicializado
+  syncService.init(prefs, ref);
+  
+  return syncService.syncEvents;
+});

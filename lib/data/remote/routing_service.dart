@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
@@ -6,6 +7,8 @@ import '../../domain/models/bike_type.dart';
 import '../../domain/models/route_preference.dart';
 import '../../domain/models/route_instruction.dart';
 import '../../domain/models/cached_route.dart';
+import '../../domain/models/safety_evaluation.dart';
+import '../../core/services/crypto_identity_service.dart';
 import '../local/preferences_service.dart';
 
 class RoutingService {
@@ -85,8 +88,101 @@ class RoutingService {
               // Maior esforço prioriza a rota mais direta (menor distância), aceitando paradas, curvas e subidas
               score = -distance;
             } else if (strategy == RouteStrategy.seguranca) {
-              // Segurança prioriza menos cruzamentos e manobras complicadas
-              score = -(maneuverDensity * 30.0) - (distance * 0.5);
+              // 4.1 Carrega e analisa relatos P2P multicritério (RF005)
+              final List<SafetyEvaluation> safetyEvaluations = _prefsService.loadSafetyEvaluations();
+              final myPublicKey = CryptoIdentityService().publicKey;
+              
+              double weightedSafetySum = 0.0;
+              double totalWeights = 0.0;
+
+              // Analisa palavras-chave nas vias retornadas pelo OSRM (Ciclovias, Avenidas Iluminadas)
+              int osmSafeCount = 0;
+              int osmUnsafeCount = 0;
+              final List<dynamic> steps = legs.isNotEmpty ? (legs[0]['steps'] as List? ?? []) : [];
+              for (final step in steps) {
+                final name = (step['name'] as String? ?? '').toLowerCase();
+                
+                // Infraestrutura segura
+                if (name.contains('ciclo') || 
+                    name.contains('parque') || 
+                    name.contains('praça') || 
+                    name.contains('praca') || 
+                    name.contains('compartilhada') || 
+                    name.contains('avenida') || 
+                    name.contains('av.')) {
+                  osmSafeCount++;
+                }
+
+                // Vias rápidas/expressas, rodovias ou túneis escuros
+                if (name.contains('rodovia') || 
+                    name.contains('br-') || 
+                    name.contains('sp-') || 
+                    name.contains('via expressa') || 
+                    name.contains('túnel') || 
+                    name.contains('tunel')) {
+                  osmUnsafeCount++;
+                }
+              }
+
+              // Extrai pontos da geometria da alternativa para verificar proximidade com relatos P2P
+              final List<LatLng> routeGeometryPoints = [];
+              final geometry = route['geometry'];
+              if (geometry != null && geometry['coordinates'] != null) {
+                final List<dynamic> coords = geometry['coordinates'];
+                for (var coord in coords) {
+                  if (coord is List && coord.length >= 2) {
+                    routeGeometryPoints.add(LatLng(
+                      (coord[1] as num).toDouble(),
+                      (coord[0] as num).toDouble(),
+                    ));
+                  }
+                }
+              }
+
+              // Verifica se a rota passa perto (raio de 75m) de avaliações colaborativas P2P do WoT
+              const distanceCalc = Distance();
+              final Set<String> countedEvaluations = {};
+
+              for (final rPoint in routeGeometryPoints) {
+                for (final eval in safetyEvaluations) {
+                  final evalKey = '${eval.segmentId}_${eval.timestamp}';
+                  if (countedEvaluations.contains(evalKey)) continue;
+                  
+                  final meters = distanceCalc.as(LengthUnit.Meter, rPoint, eval.point);
+                  if (meters <= 75.0) {
+                    countedEvaluations.add(evalKey);
+
+                    // 1. Decaimento Temporal: Meia-vida de 30 dias (lambda = 0.0231/dia)
+                    final ageInDays = (DateTime.now().millisecondsSinceEpoch - eval.timestamp) / (1000 * 60 * 60 * 24);
+                    final temporalWeight = exp(-0.0231 * max(0.0, ageInDays));
+
+                    // 2. Web of Trust: Próprio/Confiado (1.0), Conhecido mock (1.0), Desconhecido (0.1)
+                    double wotWeight = 0.1;
+                    if (eval.creatorPublicKey == myPublicKey || 
+                        eval.creatorPublicKey == 'rastro_pub_mock_paulista' || 
+                        eval.creatorPublicKey == 'rastro_pub_mock_consolacao') {
+                      wotWeight = 1.0;
+                    } else if (eval.creatorPublicKey == 'rastro_pub_mock_elevado') {
+                      wotWeight = 0.5;
+                    }
+
+                    final weight = temporalWeight * wotWeight;
+
+                    // Score multicritério consolidado: Segurança e Iluminação sobem, Trânsito e Assaltos baixam
+                    final evalScore = (eval.safetyScore * 30.0) + (eval.lightingScore * 20.0) + (eval.hasCycleway ? 100.0 : 0.0)
+                        - (eval.trafficScore * 25.0) - (eval.accidentScore * 50.0);
+
+                    weightedSafetySum += evalScore * weight;
+                    totalWeights += weight;
+                  }
+                }
+              }
+
+              final p2pScoreFactor = totalWeights > 0.0 ? (weightedSafetySum / totalWeights) : 0.0;
+
+              // Equação de Score Geral: prioriza a reputação P2P consolidada da rota
+              score = p2pScoreFactor + (osmSafeCount * 40.0) - (osmUnsafeCount * 120.0)
+                  - (maneuverDensity * 15.0) - (distance * 0.15);
             } else {
               // Rapidez
               score = -duration;

@@ -7,6 +7,7 @@ import '../../domain/models/route_preference.dart';
 import '../../domain/models/user_profile.dart';
 import '../../domain/models/activity_record.dart';
 import '../../domain/models/cached_route.dart';
+import '../../domain/models/safety_evaluation.dart';
 import '../remote/poi_service.dart';
 
 class PreferencesService {
@@ -256,5 +257,77 @@ class PreferencesService {
       }
     }
     return [];
+  }
+
+  static const String keySafetyEvaluations = 'safety_evaluations_pref';
+
+  void saveSafetyEvaluations(List<SafetyEvaluation> evaluations) {
+    final jsonList = evaluations.map((e) => e.toJson()).toList();
+    prefs.setString(keySafetyEvaluations, jsonEncode(jsonList));
+  }
+
+  List<SafetyEvaluation> loadSafetyEvaluations() {
+    final jsonString = prefs.getString(keySafetyEvaluations);
+    if (jsonString != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(jsonString);
+        return decoded.map((e) => SafetyEvaluation.fromJson(e as Map<String, dynamic>)).toList();
+      } catch (e) {
+        return [];
+      }
+    }
+    // Retorna dados iniciais simulados para a rede P2P local (Av. Paulista, Elevado, Av. Consolação)
+    final mockEvaluations = [
+      SafetyEvaluation(
+        segmentId: 'Av. Paulista',
+        latitude: -23.556520,
+        longitude: -46.662308,
+        safetyScore: 5,
+        lightingScore: 5,
+        trafficScore: 2,
+        accidentScore: 1,
+        hasCycleway: true,
+        safeTimePeriod: 'sempre',
+        timestamp: DateTime.now().millisecondsSinceEpoch - 86400000,
+        creatorPublicKey: 'rastro_pub_mock_paulista',
+        signature: 'sig_mock_1',
+      ),
+      SafetyEvaluation(
+        segmentId: 'Elevado Presidente João Goulart',
+        latitude: -23.541520,
+        longitude: -46.643308,
+        safetyScore: 1,
+        lightingScore: 1,
+        trafficScore: 4,
+        accidentScore: 5,
+        hasCycleway: false,
+        safeTimePeriod: 'dia',
+        timestamp: DateTime.now().millisecondsSinceEpoch - 172800000,
+        creatorPublicKey: 'rastro_pub_mock_elevado',
+        signature: 'sig_mock_2',
+      ),
+      SafetyEvaluation(
+        segmentId: 'Avenida Consolação',
+        latitude: -23.561520,
+        longitude: -46.655308,
+        safetyScore: 4,
+        lightingScore: 4,
+        trafficScore: 3,
+        accidentScore: 2,
+        hasCycleway: true,
+        safeTimePeriod: 'evitar_noite',
+        timestamp: DateTime.now().millisecondsSinceEpoch - 43200000,
+        creatorPublicKey: 'rastro_pub_mock_consolacao',
+        signature: 'sig_mock_3',
+      ),
+    ];
+    saveSafetyEvaluations(mockEvaluations);
+    return mockEvaluations;
+  }
+
+  void addSafetyEvaluation(SafetyEvaluation evaluation) {
+    final evaluations = loadSafetyEvaluations();
+    evaluations.add(evaluation);
+    saveSafetyEvaluations(evaluations);
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/colors.dart';
+import 'core/services/crypto_identity_service.dart';
 
 import 'presentation/providers/theme_provider.dart';
 
@@ -11,6 +12,7 @@ import 'presentation/screens/splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
+  await CryptoIdentityService().init();
   
   runApp(
     ProviderScope(
