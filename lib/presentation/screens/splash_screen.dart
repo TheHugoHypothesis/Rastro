@@ -31,7 +31,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
         try {
           // Garante que o GPS pegue o primeiro fix e acorde o sensor
-          await Geolocator.getCurrentPosition(timeLimit: const Duration(seconds: 3));
+          await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              timeLimit: Duration(seconds: 3),
+            ),
+          );
         } catch (_) {}
       }
     }
@@ -42,8 +46,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 600),
-          pageBuilder: (_, __, ___) => const HomeScreen(),
-          transitionsBuilder: (_, animation, __, child) {
+          pageBuilder: (context, animation, secondaryAnimation) => const HomeScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
         ),

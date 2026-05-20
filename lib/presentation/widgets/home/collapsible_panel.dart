@@ -45,6 +45,20 @@ class CollapsiblePanel extends ConsumerStatefulWidget {
 }
 
 class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
+  late final ScrollController _reviewsScrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _reviewsScrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _reviewsScrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomPad = MediaQuery.of(context).padding.bottom;
@@ -432,60 +446,60 @@ class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
                       _buildRouteReputationCard(),
                       const SizedBox(height: 12),
                     ],
-
-                    // CTA button
-                    Padding(
-                      padding: EdgeInsets.only(left: 16, right: 16, bottom: bottomPad + 16, top: 4),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: widget.isDark ? AppColors.purpleGlowGradient : null,
-                            color: widget.isDark ? null : widget.primaryColor,
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: widget.isDark ? AppColors.primaryLight : widget.primaryColor,
-                              width: 0,
-                            ),
-                            boxShadow: widget.isDark
-                                ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.45), blurRadius: 18, spreadRadius: 1)]
-                                : [],
-                          ),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                            ),
-                            onPressed: () async {
-                              HapticService().selectionClick();
-                              await widget.onTraceRoute();
-                            },
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.directions_bike_rounded, color: Colors.white, size: 22),
-                                const SizedBox(width: 10),
-                                const Text(
-                                  'Traçar Rota',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                    letterSpacing: 0.3,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
             ),
+
+          // CTA button (Sempre visível no rodapé, tanto expandido quanto colapsado)
+          Padding(
+            padding: EdgeInsets.only(left: 16, right: 16, bottom: bottomPad + 16, top: widget.isExpanded ? 0 : 4),
+            child: SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: widget.isDark ? AppColors.purpleGlowGradient : null,
+                  color: widget.isDark ? null : widget.primaryColor,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: widget.isDark ? AppColors.primaryLight : widget.primaryColor,
+                    width: 0,
+                  ),
+                  boxShadow: widget.isDark
+                      ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.45), blurRadius: 18, spreadRadius: 1)]
+                      : [],
+                ),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  ),
+                  onPressed: () async {
+                    HapticService().selectionClick();
+                    await widget.onTraceRoute();
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.directions_bike_rounded, color: Colors.white, size: 22),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Traçar Rota',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
         ),
       ),
@@ -669,8 +683,10 @@ class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 200),
             child: Scrollbar(
+              controller: _reviewsScrollController,
               thumbVisibility: true,
               child: ListView.builder(
+                controller: _reviewsScrollController,
                 shrinkWrap: true,
                 physics: const BouncingScrollPhysics(),
                 itemCount: matchedEvaluations.length,

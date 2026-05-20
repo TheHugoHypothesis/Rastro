@@ -236,7 +236,7 @@ class _CoordinateDetailsSheetState extends ConsumerState<CoordinateDetailsSheet>
                     ),
                     Switch(
                       value: hasCycleway,
-                      activeColor: widget.accentColor,
+                      activeThumbColor: widget.accentColor,
                       onChanged: (val) => setDialogState(() => hasCycleway = val),
                     ),
                   ],
