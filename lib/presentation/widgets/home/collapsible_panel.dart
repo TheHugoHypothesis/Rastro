@@ -650,85 +650,91 @@ class _CollapsiblePanelState extends ConsumerState<CollapsiblePanel> {
             style: TextStyle(color: widget.textColor, fontSize: 11, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 10),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: matchedEvaluations.length,
-            itemBuilder: (context, index) {
-              final eval = matchedEvaluations[index];
-              final keyAbbrev = eval.creatorPublicKey.length > 8
-                  ? '${eval.creatorPublicKey.substring(0, 4)}...${eval.creatorPublicKey.substring(eval.creatorPublicKey.length - 4)}'
-                  : eval.creatorPublicKey;
-              final dateStr = DateTime.fromMillisecondsSinceEpoch(eval.timestamp).toLocal().toString().substring(0, 16);
-              
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: widget.isDark ? Colors.black.withValues(alpha: 0.25) : Colors.black.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: widget.isDark ? Colors.white10 : Colors.black12,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 200),
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: const BouncingScrollPhysics(),
+                itemCount: matchedEvaluations.length,
+                itemBuilder: (context, index) {
+                  final eval = matchedEvaluations[index];
+                  final keyAbbrev = eval.creatorPublicKey.length > 8
+                      ? '${eval.creatorPublicKey.substring(0, 4)}...${eval.creatorPublicKey.substring(eval.creatorPublicKey.length - 4)}'
+                      : eval.creatorPublicKey;
+                  final dateStr = DateTime.fromMillisecondsSinceEpoch(eval.timestamp).toLocal().toString().substring(0, 16);
+                  
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10, right: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: widget.isDark ? Colors.black.withValues(alpha: 0.25) : Colors.black.withValues(alpha: 0.03),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: widget.isDark ? Colors.white10 : Colors.black12,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(Icons.shield_outlined, size: 13, color: widget.isDark ? Colors.greenAccent : Colors.green),
-                            const SizedBox(width: 6),
+                            Row(
+                              children: [
+                                Icon(Icons.shield_outlined, size: 13, color: widget.isDark ? Colors.greenAccent : Colors.green),
+                                const SizedBox(width: 6),
+                                Text(
+                                  eval.segmentId.length > 24 ? '${eval.segmentId.substring(0, 21)}...' : eval.segmentId,
+                                  style: TextStyle(
+                                    color: widget.textColor,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
                             Text(
-                              eval.segmentId.length > 24 ? '${eval.segmentId.substring(0, 21)}...' : eval.segmentId,
+                              dateStr,
+                              style: TextStyle(color: widget.subtextColor, fontSize: 9, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 14,
+                          runSpacing: 6,
+                          children: [
+                            _buildMiniAttr(Icons.verified_user_rounded, 'Segurança: ${eval.safetyScore}★'),
+                            _buildMiniAttr(Icons.lightbulb_outline_rounded, 'Iluminação: ${eval.lightingScore}★'),
+                            _buildMiniAttr(Icons.directions_bike_rounded, 'Ciclovia: ${eval.hasCycleway ? "Sim" : "Não"}'),
+                            _buildMiniAttr(Icons.traffic_rounded, 'Tráfego: ${eval.trafficScore}/5'),
+                            _buildMiniAttr(Icons.warning_amber_rounded, 'Risco: ${eval.accidentScore}/5'),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.lock_outline_rounded, size: 10, color: Colors.cyanAccent),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Assinatura WoT: $keyAbbrev (Período: ${eval.safeTimePeriod})',
                               style: TextStyle(
-                                color: widget.textColor,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
+                                color: widget.isDark ? Colors.cyanAccent : Colors.cyan,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'monospace',
                               ),
                             ),
                           ],
                         ),
-                        Text(
-                          dateStr,
-                          style: TextStyle(color: widget.subtextColor, fontSize: 9, fontWeight: FontWeight.w600),
-                        ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 14,
-                      runSpacing: 6,
-                      children: [
-                        _buildMiniAttr(Icons.verified_user_rounded, 'Segurança: ${eval.safetyScore}★'),
-                        _buildMiniAttr(Icons.lightbulb_outline_rounded, 'Iluminação: ${eval.lightingScore}★'),
-                        _buildMiniAttr(Icons.directions_bike_rounded, 'Ciclovia: ${eval.hasCycleway ? "Sim" : "Não"}'),
-                        _buildMiniAttr(Icons.traffic_rounded, 'Tráfego: ${eval.trafficScore}/5'),
-                        _buildMiniAttr(Icons.warning_amber_rounded, 'Risco: ${eval.accidentScore}/5'),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.lock_outline_rounded, size: 10, color: Colors.cyanAccent),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Assinatura WoT: $keyAbbrev (Período: ${eval.safeTimePeriod})',
-                          style: TextStyle(
-                            color: widget.isDark ? Colors.cyanAccent : Colors.cyan,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'monospace',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
+                  );
+                },
+              ),
+            ),
           ),
         ],
       ),
