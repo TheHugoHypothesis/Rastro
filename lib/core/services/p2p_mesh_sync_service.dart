@@ -10,9 +10,18 @@ import '../../data/local/preferences_service.dart';
 import '../../presentation/providers/app_state_provider.dart';
 import 'crypto_identity_service.dart';
 
+/// **P2PMeshSyncService (Model/Service)**
+///
+/// Serviço encarregado de gerenciar a rede mesh peer-to-peer (P2P) local descentralizada
+/// usando o protocolo Bluetooth/Wi-Fi Direct via Google Nearby Connections.
+/// Permite o compartilhamento e a sincronização offline de avaliações de segurança de vias
+/// e estabelecimentos patrocinados entre ciclistas em rota (RF002/RF005/RF007/RF009).
 class P2PMeshSyncService {
   static final P2PMeshSyncService _instance = P2PMeshSyncService._internal();
+
+  /// Construtor de fábrica (Factory) que retorna a instância única global do Singleton.
   factory P2PMeshSyncService() => _instance;
+
   P2PMeshSyncService._internal();
 
   late PreferencesService _prefsService;
@@ -21,8 +30,15 @@ class P2PMeshSyncService {
   
   final Map<String, String> _connectedPeers = {};
   final _syncEventController = StreamController<String>.broadcast();
+
+  /// Expõe um canal contínuo de eventos textuais descritivos sobre o andamento e o status da sincronização P2P.
   Stream<String> get syncEvents => _syncEventController.stream;
 
+  /// Inicializa o serviço injetando o preferences e o reference de provedores globais do Riverpod.
+  ///
+  /// Parâmetros:
+  /// - [prefsService]: O serviço de preferências locais (`PreferencesService`).
+  /// - [ref]: A referência do leitor de provedores Riverpod (`Ref`).
   void init(PreferencesService prefsService, Ref ref) {
     _prefsService = prefsService;
     _ref = ref;
@@ -30,6 +46,7 @@ class P2PMeshSyncService {
     startSyncProcess();
   }
 
+  /// Para o escaneamento, interações de rádio, anúncio Bluetooth/Wi-Fi e encerra todas as conexões P2P ativas.
   Future<void> stopSyncProcess() async {
     try {
       await Nearby().stopAdvertising();
@@ -42,6 +59,10 @@ class P2PMeshSyncService {
     }
   }
 
+  /// Inicia dinamicamente o processo local de descoberta e anúncios P2P via Nearby Connections.
+  ///
+  /// Solicita as permissões do sistema operacional Android/iOS necessárias e ativa o scanner
+  /// do cluster em malha.
   Future<void> startSyncProcess() async {
     if (!_isInitialized) return;
     
@@ -98,7 +119,7 @@ class P2PMeshSyncService {
         serviceId: serviceId,
       );
 
-      _syncEventController.add('Rede P2P ativa: escaneando ciclistas próximos via Bluetooth/Wi-Fi...');
+      _syncEventController.add('Rede P2P activa: escaneando ciclistas próximos via Bluetooth/Wi-Fi...');
     } catch (e) {
       _syncEventController.add('Erro ao iniciar Nearby: $e');
     }
@@ -245,6 +266,10 @@ class P2PMeshSyncService {
     }
   }
 
+  /// Solicita dinamicamente as permissões de localização Bluetooth, Wi-Fi e pareamento local.
+  ///
+  /// Retorna:
+  /// - `Future<bool>`: `true` se as permissões fundamentais forem aprovadas pelo usuário.
   Future<bool> requestPermissions() async {
     final locStatus = await Permission.location.request();
     

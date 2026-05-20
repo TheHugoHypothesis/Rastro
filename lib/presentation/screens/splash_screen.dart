@@ -5,13 +5,20 @@ import 'package:geolocator/geolocator.dart';
 import '../../core/theme/colors.dart';
 import 'home_screen.dart';
 
+/// **SplashScreen (View)**
+///
+/// Tela de splash inicial que exibe a identidade de carregamento premium do Rastro,
+/// verifica permissões de GPS/localização físicas e inicia o bootstrap do app antes de
+/// transicionar suavemente para a [HomeScreen] (RF001).
 class SplashScreen extends ConsumerStatefulWidget {
+  /// Cria uma tela de splash inicial.
   const SplashScreen({super.key});
 
   @override
   ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
+/// Estado interno da [SplashScreen] contendo a lógica de inicialização de recursos e permissões.
 class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {

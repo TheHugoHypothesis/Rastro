@@ -1,15 +1,31 @@
+/// **RouteInstruction**
+///
+/// Representa uma instrução de navegação passo a passo (passo da rota)
+/// contendo orientações textuais em português (Pt-BR) e distância a percorrer até a manobra.
 class RouteInstruction {
+  /// O texto legível em português descrevendo a manobra física a ser feita (ex: "Vire à esquerda na Av. Paulista").
   final String instruction;
+
+  /// A distância parcial em metros até que a manobra seja de fato efetuada.
   final double distance;
+
+  /// O nome da via onde a manobra ocorre (ex: "Avenida Paulista").
   final String name;
 
+  /// Inicializa uma nova instrução de rota.
   RouteInstruction({
     required this.instruction,
     required this.distance,
     this.name = '',
   });
 
-  /// Factory manual para ler o JSON "maneuver" do OSRM.
+  /// Factory manual para analisar os passos brutos de manobra retornados da API do OSRM.
+  ///
+  /// Parâmetros:
+  /// - [step]: Mapa correspondente a um objeto "step" da resposta HTTP do OSRM.
+  ///
+  /// Retorno:
+  /// - Uma nova instância traduzida e estruturada de [RouteInstruction].
   factory RouteInstruction.fromOSRM(Map<String, dynamic> step) {
     final maneuver = step['maneuver'] as Map<String, dynamic>? ?? {};
     final type = maneuver['type'] ?? 'continue';
@@ -53,6 +69,10 @@ class RouteInstruction {
     );
   }
 
+  /// Serializa o objeto instrução em um formato JSON compatível.
+  ///
+  /// Retorno:
+  /// - `Map<String, dynamic>` serializado.
   Map<String, dynamic> toJson() {
     return {
       'instruction': instruction,
@@ -61,6 +81,13 @@ class RouteInstruction {
     };
   }
 
+  /// Desserializa um mapa JSON recriando uma instância de [RouteInstruction].
+  ///
+  /// Parâmetros:
+  /// - [json]: O mapa de chaves JSON desserializado.
+  ///
+  /// Retorno:
+  /// - Instância válida de [RouteInstruction].
   factory RouteInstruction.fromJson(Map<String, dynamic> json) {
     return RouteInstruction(
       instruction: json['instruction'] as String,
@@ -69,6 +96,7 @@ class RouteInstruction {
     );
   }
 
+  /// Traduz a direção de manobra do inglês para o português formal.
   static String _translateModifier(String modifier) {
     switch (modifier) {
       case 'right': return 'à direita';

@@ -1,30 +1,55 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rastro/main.dart';
+import 'package:rastro/domain/models/partner_establishment.dart';
+import 'package:rastro/presentation/providers/app_state_provider.dart';
 
+/// Notificador falso para simular conectividade online constante sem disparar Timers recorrentes.
+class FakeConnectivityNotifier extends ConnectivityNotifier {
+  @override
+  bool build() => true;
+}
+
+/// Notificador falso de estabelecimentos parceiros para desativar a sincronização HTTP durante o teste de widgets.
+class FakePartnerEstablishmentsNotifier extends PartnerEstablishmentsNotifier {
+  @override
+  List<PartnerEstablishment> build() => [];
+}
+
+/// Notificador falso de controle P2P para manter o Nearby Connections desativado e livre de timers nos testes.
+class FakeP2PEnabledNotifier extends P2PEnabledNotifier {
+  @override
+  bool build() => false;
+}
+
+/// **main**
+///
+/// Ponto de entrada para os testes de integração visual/widgets (Widget/Smoke Tests).
+/// Simula o arranque completo do app Rastro em ambiente controlado de teste.
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Rastro App Bootstrap and Smoke Test', (WidgetTester tester) async {
+    // Define os valores mockados iniciais para evitar erros de leitura de preferências
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Constrói o app injetando o mock nas dependências Riverpod
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          connectivityProvider.overrideWith(FakeConnectivityNotifier.new),
+          partnerEstablishmentsProvider.overrideWith(FakePartnerEstablishmentsNotifier.new),
+          p2pEnabledProvider.overrideWith(FakeP2PEnabledNotifier.new),
+        ],
+        child: const MyApp(),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Garante que o widget raiz MyApp foi inflado com sucesso na árvore de componentes
+    expect(find.byType(MyApp), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Drena os timers pendentes criados pelos atrasos da SplashScreen (ex: minDelay de 2s)
+    await tester.pump(const Duration(seconds: 5));
   });
 }

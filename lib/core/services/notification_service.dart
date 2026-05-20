@@ -1,10 +1,15 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// **NotificationService (Model/Service)**
+///
+/// Serviço encarregado pelo acionamento de notificações locais no sistema operacional (Android e iOS).
+/// Mantém o ciclista informado com notificações flutuantes (Heads-Up) e em segundo plano de forma contínua (RF003).
 class NotificationService {
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
 
+  /// Inicializa e configura os canais de notificação nativos e solicita as permissões necessárias.
   Future<void> init() async {
     if (_initialized) return;
 
@@ -33,6 +38,13 @@ class NotificationService {
     _initialized = true;
   }
 
+  /// Dispara e exibe uma notificação do sistema operacional de forma imediata.
+  ///
+  /// Parâmetros:
+  /// - [id]: Identificador numérico exclusivo da notificação (`int`).
+  /// - [title]: Rótulo de título em negrito da notificação (`String`).
+  /// - [body]: Corpo textual descritivo detalhado (`String`).
+  /// - [ongoing]: Determina se a notificação é persistente/não-removível pelo usuário (`bool`).
   Future<void> showNotification({
     required int id,
     required String title,
@@ -72,15 +84,21 @@ class NotificationService {
     );
   }
 
+  /// Cancela e remove uma notificação ativa específica com base em seu identificador único.
+  ///
+  /// Parâmetros:
+  /// - [id]: O identificador numérico da notificação a ser cancelada (`int`).
   Future<void> cancel(int id) async {
     await _notificationsPlugin.cancel(id: id);
   }
 
+  /// Cancela e remove instantaneamente todas as notificações ativas emitidas pelo Rastro.
   Future<void> cancelAll() async {
     await _notificationsPlugin.cancelAll();
   }
 }
 
+/// Provedor Riverpod (ViewModel/Service Provider) que expõe o Singleton de `NotificationService`.
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService();
 });

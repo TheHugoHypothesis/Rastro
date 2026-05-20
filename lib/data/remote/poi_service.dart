@@ -4,18 +4,38 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+/// **PoiCategory (Model/Enum)**
+///
+/// Categorias possíveis de Pontos de Interesse (POIs) exibidos no mapa.
 enum PoiCategory {
+  /// Restaurantes, praças de alimentação ou lanchonetes.
   restaurant,
+
+  /// Cafeterias ou sorveterias.
   cafe,
+
+  /// Hospitais, clínicas e consultórios médicos.
   hospital,
+
+  /// Farmácias ou drogarias.
   pharmacy,
+
+  /// Lojas especializadas em peças ou consertos de bicicletas.
   bikeShop,
+
+  /// Supermercados, mercados locais ou hortifrútis.
   supermarket,
+
+  /// Padarias ou panificadoras.
   bakery,
+
+  /// Bares, pubs ou choperias.
   bar,
 }
 
+/// Extensão utilitária para obter descrições humanizadas em português das categorias de POI.
 extension PoiCategoryExt on PoiCategory {
+  /// Retorna o rótulo descritivo amigável para exibição em português.
   String get label {
     switch (this) {
       case PoiCategory.restaurant:  return 'Restaurante';
@@ -30,12 +50,23 @@ extension PoiCategoryExt on PoiCategory {
   }
 }
 
+/// **PoiResult (Model/Data)**
+///
+/// Representação física de um Ponto de Interesse mapeado espacialmente.
 class PoiResult {
+  /// Nome de exibição pública do estabelecimento ou POI (`String`).
   final String name;
+
+  /// Coordenadas geográficas exatas do ponto (`LatLng`).
   final LatLng point;
+
+  /// Categoria classificada do Ponto de Interesse (`PoiCategory`).
   final PoiCategory category;
+
+  /// Construtor de imutabilidade padrão do PoiResult.
   const PoiResult({required this.name, required this.point, required this.category});
 
+  /// Converte a instância de PoiResult em um mapa estruturado para codificação JSON.
   Map<String, dynamic> toJson() => {
     'name': name,
     'lat': point.latitude,
@@ -43,6 +74,7 @@ class PoiResult {
     'category': category.name,
   };
 
+  /// Constrói e inicializa uma nova instância de PoiResult a partir de um mapa de chaves-valores JSON decodificado.
   factory PoiResult.fromJson(Map<String, dynamic> json) {
     return PoiResult(
       name: json['name'] as String,
@@ -55,6 +87,10 @@ class PoiResult {
   }
 }
 
+/// **PoiService (Model/Data/Remote)**
+///
+/// Serviço encarregado de consumir remotamente a API oficial de mapeamento OpenStreetMap (OSM) via Overpass QL.
+/// Permite descobrir estabelecimentos comerciais de apoio próximos ao trajeto do ciclista (RF007/RF009).
 class PoiService {
   // Endpoints alternativos do Overpass (OSM oficial) — fallback sequencial
   static const List<String> _endpoints = [
@@ -62,8 +98,18 @@ class PoiService {
     'https://overpass.karte.io/api/interpreter',
   ];
 
-  /// Busca POIs dentro do [bbox] via Overpass QL (dados oficiais do OSM).
-  /// Inclui nodes E ways (estabelecimentos grandes são polígonos no OSM).
+  /// Consulta e extrai dinamicamente Pontos de Interesse (POIs) dentro de uma caixa de delimitação geográfica.
+  ///
+  /// Filtra estabelecimentos comerciais, farmácias, mercados e bicicletários usando consultas Overpass QL
+  /// otimizadas para centróides de polígonos e nodes estruturados.
+  ///
+  /// Parâmetros:
+  /// - [bbox]: Os limites geográficos retangulares de busca (`LatLngBounds`).
+  /// - [maxDegreeSpan]: A tolerância máxima de amplitude angular para evitar abusos na API (`double`).
+  /// - [limitTotal]: O número máximo de registros a serem retornados na consulta (`int`).
+  ///
+  /// Retorna:
+  /// - Uma lista contendo os POIs descobertos (`List<PoiResult>`).
   Future<List<PoiResult>> fetchInBbox({
     required LatLngBounds bbox,
     double maxDegreeSpan = 0.60, // ~66 km — cobre o raio base de 10km com folga

@@ -11,12 +11,31 @@ import '../../domain/models/safety_evaluation.dart';
 import '../../core/services/crypto_identity_service.dart';
 import '../local/preferences_service.dart';
 
+/// **RoutingService (Model/Data/Remote)**
+///
+/// Serviço remoto encarregado pelo cálculo inteligente de trajetos ciclistas,
+/// integração de relatos de segurança descentralizados P2P, buscas de endereços e geocodificação.
+/// Implementa as equações de ponderação multicritério para segurança, menor esforço e velocidade (RF002/RF003).
 class RoutingService {
   final PreferencesService _prefsService;
 
+  /// Inicializa o serviço injetando o manipulador de preferências locais.
   RoutingService(this._prefsService);
 
-  /// Obtém o caminho de rota detalhado da API OSRM com suporte dinâmico a RF003 e RF004
+  /// Obtém o caminho da rota detalhado, integrando velocidade estimada, infraestrutura segura e relatos P2P.
+  ///
+  /// Avalia alternativas geradas pela API OSRM e aplica pesos com decaimento temporal e confiança WoT (RF004/RF005).
+  ///
+  /// Parâmetros:
+  /// - [start]: Coordenadas de partida da rota (`LatLng`).
+  /// - [end]: Coordenadas de destino final da rota (`LatLng`).
+  /// - [waypoint]: Coordenada intermediária opcional (ex: parada patrocinada) (`LatLng?`).
+  /// - [bikeType]: O tipo de bicicleta configurado (`BikeType`).
+  /// - [strategy]: A estratégia/critério de cálculo adotada (`RouteStrategy`).
+  ///
+  /// Retorna:
+  /// - Um registro estruturado contendo a lista de pontos geográficos, as instruções de manobra de voz,
+  ///   a distância adaptada em metros e a estimativa de tempo adaptada para ciclistas.
   Future<({List<LatLng> points, List<RouteInstruction> instructions, double distance, double duration})> getRoutePath({
     required LatLng start,
     required LatLng end,
@@ -290,7 +309,13 @@ class RoutingService {
     );
   }
 
-  /// Busca endereços por texto na API Nominatim
+  /// Busca e geocodifica endereços no Brasil a partir de strings de consulta via API OpenStreetMap Nominatim.
+  ///
+  /// Parâmetros:
+  /// - [query]: A consulta de texto de busca (`String`).
+  ///
+  /// Retorna:
+  /// - Uma lista de mapas de propriedades dos destinos compatíveis encontrados (`List<Map<String, dynamic>>`).
   Future<List<Map<String, dynamic>>> searchAddress(String query) async {
     if (query.trim().isEmpty) return [];
 
@@ -323,7 +348,13 @@ class RoutingService {
     return [];
   }
 
-  /// Geocodificação reversa para traduzir uma coordenada em endereço legível
+  /// Efetua geocodificação reversa traduzindo uma coordenada geográfica em endereço legível humanizado.
+  ///
+  /// Parâmetros:
+  /// - [point]: Coordenadas físicas do ponto (`LatLng`).
+  ///
+  /// Retorna:
+  /// - Uma string legível descrevendo o logradouro e bairro correspondentes.
   Future<String> reverseGeocode(LatLng point) async {
     final url = Uri.parse(
         'https://nominatim.openstreetmap.org/reverse?lat=${point.latitude}&lon=${point.longitude}&format=json');

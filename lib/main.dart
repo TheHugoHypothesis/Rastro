@@ -9,6 +9,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'presentation/providers/app_state_provider.dart';
 import 'presentation/screens/splash_screen.dart';
 
+/// **main**
+///
+/// Ponto de entrada de execução do aplicativo Rastro.
+/// Efetua a inicialização assíncrona do Flutter, resgata a instância única de `SharedPreferences`
+/// e inicializa chaves de criptografia e WoT antes de instanciar a UI (View) reativa com [ProviderScope].
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
@@ -24,7 +29,12 @@ void main() async {
   );
 }
 
+/// **MyApp (View)**
+///
+/// Widget raiz do Rastro que subscreve-se ao [themeProvider] para reagir e aplicar
+/// a identidade visual neo-brutalista premium (Modo Claro/Escuro) através do [MaterialApp].
 class MyApp extends ConsumerWidget {
+  /// Constrói a raiz do aplicativo Rastro.
   const MyApp({super.key});
 
   @override

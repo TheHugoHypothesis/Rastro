@@ -2,9 +2,20 @@ import 'package:latlong2/latlong.dart';
 import '../../domain/models/bike_type.dart';
 import '../../domain/models/route_preference.dart';
 
+/// **RoutingService (Legacy/Scaffold)**
+///
+/// Classe legada utilizada para simulação e teste de cálculo de rotas no scaffold original do aplicativo.
 class RoutingService {
-  /// Retorna as GeoPoints de uma rota calculada com base na estratégia do usuário
-  /// Para este MVP, simula a requisição ao OSRM ou GraphHopper.
+  /// Retorna os pontos geográficos (coordenadas) de uma rota simulada.
+  ///
+  /// Parâmetros:
+  /// - [start]: Coordenada de partida (`LatLng`).
+  /// - [end]: Coordenada de destino final (`LatLng`).
+  /// - [bikeType]: O tipo de bicicleta configurado (`BikeType`).
+  /// - [strategy]: A estratégia de cálculo (`RouteStrategy`).
+  ///
+  /// Retorna:
+  /// - `Future<List<LatLng>>`: Uma lista contendo as coordenadas simuladas.
   Future<List<LatLng>> calculateRoute({
     required LatLng start,
     required LatLng end,

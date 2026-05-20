@@ -2,6 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rastro/domain/models/partner_establishment.dart';
 import 'package:rastro/core/services/crypto_identity_service.dart';
 
+/// **main**
+///
+/// Ponto de entrada principal para a execução da suíte de testes unitários do Rastro.
+/// Executa de forma autônoma em linha de comando atendendo aos requisitos RNF010 e RNF011.
 void main() {
   group('PartnerEstablishment Model Unit Tests', () {
     test('Should correctly parse from valid JSON map and format back to JSON', () {

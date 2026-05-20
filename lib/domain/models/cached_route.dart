@@ -3,17 +3,39 @@ import 'bike_type.dart';
 import 'route_preference.dart';
 import 'route_instruction.dart';
 
+/// **CachedRoute**
+///
+/// Modela uma rota calculada e persistida localmente em cache para permitir
+/// a navegação offline resiliente (RF003 / RF008).
 class CachedRoute {
+  /// Ponto geográfico inicial (partida).
   final LatLng start;
+
+  /// Ponto geográfico final (destino).
   final LatLng end;
+
+  /// O tipo de bicicleta utilizado no cálculo de tempo e via.
   final BikeType bikeType;
+
+  /// A heurística/estratégia de roteamento adotada.
   final RouteStrategy strategy;
+
+  /// Lista ordenada de coordenadas que traçam a rota geográfica completa no mapa.
   final List<LatLng> points;
+
+  /// Lista estruturada de instruções de navegação por voz/painel (passo a passo).
   final List<RouteInstruction> instructions;
+
+  /// Distância total do percurso calculada em metros.
   final double distance;
+
+  /// Duração aproximada estimada em segundos para o trajeto.
   final double duration;
+
+  /// Unix Epoch milissegundos de quando a rota foi gerada e armazenada no cache local.
   final int timestamp;
 
+  /// Inicializa uma nova rota em cache com parâmetros obrigatórios.
   CachedRoute({
     required this.start,
     required this.end,
@@ -26,6 +48,10 @@ class CachedRoute {
     required this.timestamp,
   });
 
+  /// Converte o objeto em um mapa JSON para armazenamento local robusto.
+  ///
+  /// Retorno:
+  /// - `Map<String, dynamic>` serializado.
   Map<String, dynamic> toJson() {
     return {
       'start_lat': start.latitude,
@@ -42,6 +68,13 @@ class CachedRoute {
     };
   }
 
+  /// Reconstrói um objeto [CachedRoute] a partir de dados serializados JSON.
+  ///
+  /// Parâmetros:
+  /// - [json]: Mapa de dados desserializado.
+  ///
+  /// Retorno:
+  /// - Uma instância válida de [CachedRoute].
   factory CachedRoute.fromJson(Map<String, dynamic> json) {
     final List<dynamic> pointsList = json['points'] as List<dynamic>? ?? [];
     final List<dynamic> instList = json['instructions'] as List<dynamic>? ?? [];

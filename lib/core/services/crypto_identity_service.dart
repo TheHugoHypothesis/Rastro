@@ -3,16 +3,25 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// **CryptoIdentityService (Model/Service)**
+///
+/// Serviço Singleton encarregado por prover identidades criptográficas auto-geradas.
+/// Implementa a criptografia simétrica/assimétrica simplificada para Web of Trust (WoT) P2P (RF005/RNF011).
 class CryptoIdentityService {
   static final CryptoIdentityService _instance = CryptoIdentityService._internal();
+
+  /// Construtor de fábrica (Factory) que retorna a instância única global do Singleton.
   factory CryptoIdentityService() => _instance;
+
   CryptoIdentityService._internal();
 
   late String _privateKey;
   late String _publicKey;
 
+  /// Retorna a chave pública de identificação do ciclista na rede P2P local.
   String get publicKey => _publicKey;
 
+  /// Inicializa o par de chaves criptográficas resgatando do SharedPreferences ou gerando novas.
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     final savedPriv = prefs.getString('wot_private_key');
@@ -35,7 +44,13 @@ class CryptoIdentityService {
     }
   }
 
-  /// Assina uma mensagem usando a chave privada local (Gera assinatura digital)
+  /// Assina uma mensagem de texto usando a chave privada local (Gera assinatura digital única).
+  ///
+  /// Parâmetros:
+  /// - [message]: Payload de texto contendo os dados a serem assinados (`String`).
+  ///
+  /// Retorna:
+  /// - Uma string contendo a assinatura criptográfica anexada com a chave pública do autor.
   String sign(String message) {
     final secretPart = _privateKey.substring(0, 8);
     final rawSig = sha256.convert(utf8.encode(message + secretPart)).toString();
@@ -43,7 +58,15 @@ class CryptoIdentityService {
     return '${rawSig.substring(0, 24)}_${_publicKey.substring(11)}';
   }
 
-  /// Verifica se a assinatura é válida para a mensagem e chave pública fornecidas
+  /// Verifica se a assinatura digital é legítima para a mensagem e chave pública fornecidas.
+  ///
+  /// Parâmetros:
+  /// - [message]: O payload textual original que foi assinado (`String`).
+  /// - [signature]: A assinatura criptográfica a ser validada (`String`).
+  /// - [senderPublicKey]: A chave pública declarada do autor (`String`).
+  ///
+  /// Retorna:
+  /// - `bool`: `true` se os dados forem íntegros e assinados pelo autor declarado, `false` caso contrário.
   bool verify(String message, String signature, String senderPublicKey) {
     if (signature.isEmpty || senderPublicKey.isEmpty) return false;
     
@@ -62,6 +85,7 @@ class CryptoIdentityService {
     return sigHash.isNotEmpty;
   }
 
+  /// Chave pública master do administrador utilizada para chancelar parceiros patrocinados.
   static const String adminPublicKey = 'rastro_admin_master_pub_key';
 
   /// Valida criptograficamente se o estabelecimento parceiro foi assinado e legitimado pelo administrador.
