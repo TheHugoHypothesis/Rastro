@@ -17,6 +17,7 @@ import '../widgets/profile/frequent_addresses_sheet.dart';
 import '../widgets/profile/activity_report_widget.dart';
 import '../../domain/models/activity_record.dart';
 import '../../core/services/haptic_service.dart';
+import 'onboarding_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -225,6 +226,23 @@ class ProfileScreen extends ConsumerWidget {
                               },
                             ),
                           ],
+                        ),
+                        const Divider(height: 24),
+                        // Opção de rever introdução
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.info_outline_rounded, color: primaryLight, size: 20),
+                          title: Text('Ver Introdução do App', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 14)),
+                          subtitle: Text('Rever a tela de onboarding e novidades', style: TextStyle(color: subtextColor, fontSize: 12)),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () {
+                            HapticService().lightImpact();
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const OnboardingScreen(),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
