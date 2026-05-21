@@ -25,7 +25,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       icon: Icons.directions_bike_rounded,
       title: 'Bem-vindo ao Rastro',
       subtitle: 'Mapeando caminhos, conectando ciclistas.',
-      description: 'O Rastro é o primeiro aplicativo de navegação ciclística 100% colaborativo, focado na sua segurança e totalmente offline.',
+      description: 'O Rastro é o primeiro aplicativo de navegação ciclística 100% colaborativo e focado na sua segurança.',
       features: [
         'Rotas inteligentes para ciclistas',
         'Foco total em segurança urbana',
