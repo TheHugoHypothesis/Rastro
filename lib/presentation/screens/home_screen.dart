@@ -1059,8 +1059,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                 ignoring: _routeAccepted,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     _buildCompassButton(),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Girar',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: _isDark ? Colors.white70 : Colors.black87,
+                        letterSpacing: 0.4,
+                        shadows: [
+                          Shadow(
+                            color: _isDark ? Colors.black.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.8),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     LocationFab(
                       isDark: _isDark,
@@ -1080,6 +1098,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with MapPoiMixin {
                           _initLocation();
                         }
                       },
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Focar',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: _isDark ? Colors.white70 : Colors.black87,
+                        letterSpacing: 0.4,
+                        shadows: [
+                          Shadow(
+                            color: _isDark ? Colors.black.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.8),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
