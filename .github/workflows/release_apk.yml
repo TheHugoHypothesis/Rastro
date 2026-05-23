@@ -1,0 +1,64 @@
+name: Build & Release Rastro APK
+
+on:
+  push:
+    tags:
+      - 'v*' # Dispara o build e release quando uma tag no formato v1.0.0 for empurrada
+  workflow_dispatch: # Permite disparar manualmente pela aba Actions do GitHub
+
+jobs:
+  build:
+    name: Build & Release Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Setup Java Development Kit (JDK)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run Static Analysis (Linter)
+        run: flutter analyze
+
+      - name: Run Automated Tests
+        run: flutter test
+
+      - name: Build Release APK
+        run: flutter build apk --release
+
+      - name: Create GitHub Release and Upload APK
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/app/outputs/flutter-apk/app-release.apk
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## Rastro - Navegação Adaptativa e Segurança Colaborativa Offline-First
+            
+            Consolidação da versão estável compiled automaticamente via pipeline de CI/CD no GitHub Actions.
+            
+            ### O que há de novo nesta versão:
+            * Nova tela de Onboarding interativa guiando o primeiro lançamento.
+            * Botões flutuantes de controle de mapa com identificações visuais explícitas (Girar e Focar).
+            * Nova interface de configurações de perfil com gerenciamento completo de feedback tátil e sonoro.
+            * Estabilidade e cobertura completa de suíte de testes de domínio e integração visual.
+            
+            ### Arquivos disponíveis:
+            * `app-release.apk`: Binário oficial compilado pronto para instalação no sistema operacional Android.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
